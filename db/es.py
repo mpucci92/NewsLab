@@ -51,6 +51,12 @@ ES_MAPPINGS = {
 					"analyzer" : "search_analyzer",
 					"similarity" : "no_length_norm"
 				},
+				"search_query" : {
+					"type" : "keyword"
+				},
+				"source_href" : {
+					"type" : "keyword"
+				},
 				"title": {
 					"type" : "text"
 				},
@@ -219,13 +225,16 @@ def index():
 										   stats_only=True,
 										   raise_on_error=False)
 
-			print("Total Indexed:", indexed)
-			print("Total Failed:", failed)
+			print("Indexed:", indexed)
+			print("Failed:", failed)
 
 			total_indexed += indexed
 			total_failed += failed
 
 			items = []
+
+	print("Total Indexed":, total_indexed)
+	print("Total Failed:", total_failed)
 
 if __name__ == '__main__':
 
