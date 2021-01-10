@@ -233,8 +233,13 @@ def index():
 
 			items = []
 
-	print("Total Indexed":, total_indexed)
-	print("Total Failed:", total_failed)
+	indexed, failed = helpers.bulk(es,
+								   items,
+									stats_only=True,
+									raise_on_error=False)
+
+	print("Total Indexed":, total_indexed + indexed)
+	print("Total Failed:", total_failed + failed)
 
 if __name__ == '__main__':
 
