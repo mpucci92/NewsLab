@@ -324,7 +324,7 @@ def clean(item):
 
 	###############################################################################################
 
-	new_item['search'] = [new_item.get("title")]
+	new_item['search'] = [new_item.get("title", "")]
 
 	summary = new_item.get("summary", "")
 	if summary:
