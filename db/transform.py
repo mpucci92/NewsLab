@@ -5,21 +5,50 @@ from pathlib import Path
 import sys, os
 import json
 
-def get_search(source):
+def get_search(item):
 
-	search = source.get("title", "")
-	search += ". "
-	search += source.get("summary", "")
+	search = []
 
-	source['search'] = search.strip()
+	title = source.get("title", "")
+	if title:
+		search.append(title)
 
-	return source
+	summary = source.get("summary", "")
+	if summary:
+		search.append(summary)
+
+	categories = source.get("categories", "")
+	if categories:
+		search.extend(categories)
+
+	if len(search) != 0:
+		item['_source']['search'] = search
+	elif 'search' in item['_source']:
+		del item['_source']['search']
+
+	return search
 
 def rss():
 
 	def transform(item):
-		item['_source'] = get_search(item['_source'])
+
+		source = item['_source']
+		source['authors'] = [
+			author.lower()
+			for author in
+			source['authors'] + [source['article_source']]
+		]
+		source['categories'] = [
+			cat.lower()
+			for cat in
+			source['categories']
+		]
+		source['abs_sentiment_score'] = abs(source['sentiment_score'])
+		
+		item['_source'] = source
+		item = get_search(item)
 		item['_index'] = "news"
+
 		return item
 
 	for file in (RSS_FOLDER / "old").iterdir():
@@ -40,8 +69,11 @@ def rss():
 def cnbc():
 
 	def transform(item):
+
+		source['abs_sentiment_score'] = abs(source['sentiment_score'])
 		item['_source'] = get_search(item['_source'])
 		item['_index'] = "news"
+
 		return item
 
 	for file in (CNBC_FOLDER / "old").iterdir():
@@ -62,8 +94,11 @@ def cnbc():
 def google():
 
 	def transform(item):
+
+		item['_source']['abs_sentiment_score'] = abs(item['_source']['sentiment_score'])
 		item['_source'] = get_search(item['_source'])
 		item['_index'] = "news"
+		
 		return item
 
 	for file in (GOOGLE_FOLDER / "old").iterdir():

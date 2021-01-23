@@ -113,6 +113,9 @@ ES_MAPPINGS = {
 				},
 				"sentiment_score" : {
 					"type" : "float"
+				},
+				"abs_sentiment_score" : {
+					"type" : "float"
 				}
 			}
 		}
@@ -216,7 +219,7 @@ def index():
 		with open(file, "r") as _file:
 			items.extend(json.loads(_file.read()))
 
-		if i > 0 and i % 10 == 0:
+		if i > 0 and i % 20 == 0:
 
 			print("Indexing", len(items))
 
@@ -238,7 +241,7 @@ def index():
 									stats_only=True,
 									raise_on_error=False)
 
-	print("Total Indexed":, total_indexed + indexed)
+	print("Total Indexed:", total_indexed + indexed)
 	print("Total Failed:", total_failed + failed)
 
 if __name__ == '__main__':
