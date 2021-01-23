@@ -21,7 +21,7 @@ from gcp import send_gcp_metric
 
 ###################################################################################################
 
-ES_CLIENT = Elasticsearch(CONFIG['ES_IP'], http_comprress=True, timeout=30)
+ES_CLIENT = Elasticsearch(CONFIG['ES_IP'], port=CONFIG['ES_PORT'], http_comprress=True, timeout=30)
 HEADERS = {"Content-Type" : "application/json"}
 
 df = pd.read_csv("data/tickers.csv")

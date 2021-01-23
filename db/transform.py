@@ -8,6 +8,7 @@ import json
 def get_search(item):
 
 	search = []
+	source = item['_source']
 
 	title = source.get("title", "")
 	if title:
@@ -26,23 +27,28 @@ def get_search(item):
 	elif 'search' in item['_source']:
 		del item['_source']['search']
 
-	return search
+	return item
 
 def rss():
 
 	def transform(item):
 
 		source = item['_source']
-		source['authors'] = [
-			author.lower()
-			for author in
-			source['authors'] + [source['article_source']]
-		]
-		source['categories'] = [
-			cat.lower()
-			for cat in
-			source['categories']
-		]
+
+		if source.get("authors"):
+			source['authors'] = [
+				author.lower()
+				for author in
+				source['authors'] + [source['article_source']]
+			]
+
+		if source.get("categories"):
+			source['categories'] = [
+				cat.lower()
+				for cat in
+				source['categories']
+			]
+
 		source['abs_sentiment_score'] = abs(source['sentiment_score'])
 		
 		item['_source'] = source
@@ -51,7 +57,7 @@ def rss():
 
 		return item
 
-	for file in (RSS_FOLDER / "old").iterdir():
+	for file in sorted((RSS_FOLDER / "old").iterdir()):
 
 		print("RSS:", file.name)
 
@@ -70,13 +76,20 @@ def cnbc():
 
 	def transform(item):
 
-		source['abs_sentiment_score'] = abs(source['sentiment_score'])
-		item['_source'] = get_search(item['_source'])
+		if item['_source'].get("article_type"):
+			item['_source']['article_type'] = item['_source']['article_type'].strip().lower()
+
+		item['_source']['authors'] = item['_source']['authors'].strip().lower()
+		if item['_source']['authors'] == "cnbc.com":
+			item['_source']['authors'] = "cnbc"
+
+		item['_source']['abs_sentiment_score'] = abs(item['_source']['sentiment_score'])
+		item = get_search(item)
 		item['_index'] = "news"
 
 		return item
 
-	for file in (CNBC_FOLDER / "old").iterdir():
+	for file in sorted((CNBC_FOLDER / "old").iterdir()):
 
 		print("CNBC:", file.name)
 
@@ -96,12 +109,14 @@ def google():
 	def transform(item):
 
 		item['_source']['abs_sentiment_score'] = abs(item['_source']['sentiment_score'])
-		item['_source'] = get_search(item['_source'])
+		item['_source']['authors'] = item['_source']['authors'].strip().lower()
+		item['_source']['title'] = item['_source']['title'].strip()
+		item = get_search(item)
 		item['_index'] = "news"
 		
 		return item
 
-	for file in (GOOGLE_FOLDER / "old").iterdir():
+	for file in sorted((GOOGLE_FOLDER / "old").iterdir()):
 
 		print("GOOGLE:", file.name)
 
@@ -118,6 +133,6 @@ def google():
 
 if __name__ == '__main__':
 
-	rss()
 	cnbc()
+	rss()
 	google()
