@@ -49,7 +49,16 @@ def rss():
 				source['categories']
 			]
 
+		tickers = source.get("tickers")
+		if tickers:
+			for ticker in tickers:
+				if ':' in ticker:
+					tickers.append(ticker.split(':')[1])
+			source['tickers'] = list(set(tickers))
+
 		source['abs_sentiment_score'] = abs(source['sentiment_score'])
+		source['title'] = source['title'].strip()
+		source['summary'] = source['summary'].strip()
 		
 		item['_source'] = source
 		item = get_search(item)
@@ -87,6 +96,13 @@ def cnbc():
 		item = get_search(item)
 		item['_index'] = "news"
 
+		tickers = item['_source'].get("tickers")
+		if tickers:
+			for ticker in tickers:
+				if ":" in ticker:
+					tickers.append(ticker.split(":")[1].strip())
+			item['_source']['tickers'] = list(set(tickers))
+
 		return item
 
 	for file in sorted((CNBC_FOLDER / "old").iterdir()):
@@ -113,7 +129,14 @@ def google():
 		item['_source']['title'] = item['_source']['title'].strip()
 		item = get_search(item)
 		item['_index'] = "news"
-		
+
+		tickers = item['_source'].get("tickers")
+		if tickers:
+			for ticker in tickers:
+				if ":" in ticker:
+					tickers.append(ticker.split(":")[1].strip())
+			item['_source']['tickers'] = list(set(tickers))
+
 		return item
 
 	for file in sorted((GOOGLE_FOLDER / "old").iterdir()):
@@ -133,6 +156,6 @@ def google():
 
 if __name__ == '__main__':
 
+	google()
 	cnbc()
 	rss()
-	google()

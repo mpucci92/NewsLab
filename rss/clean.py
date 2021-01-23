@@ -284,9 +284,9 @@ def clean(item):
 	## Create new object
 
 	new_item = {
-		'title' : item['title'],
-		'summary' : summary,
-		'_summary' : item.get('summary', ''),
+		'title' : item['title'].strip(),
+		'summary' : summary.strip(),
+		'_summary' : item.get('summary', '').strip(),
 		'timestamp' : timestamp,
 		'oscrap_timestamp' : oscrap_timestamp,
 		'language' : language,
@@ -296,6 +296,9 @@ def clean(item):
 	}
 
 	if ticker_matches:
+		for ticker in ticker_matches:
+			if ':' in ticker:
+				ticker_matches.append(ticker.split(':')[1])
 		new_item['tickers'] = list(set(ticker_matches))
 
 	if ticker_misses:

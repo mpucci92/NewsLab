@@ -174,7 +174,7 @@ def search_news(search_string="", sentiment=None, tickers=None, article_source=N
         filters.append(terms_filter("language", language))
 
     if authors:
-        filters.append(terms_filter("authors", tickers))
+        filters.append(terms_filter("authors", authors))
 
     if categories:
         filters.append(terms_filter("categories", categories))
