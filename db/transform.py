@@ -5,30 +5,68 @@ from pathlib import Path
 import sys, os
 import json
 
-def get_search(source):
+def get_search(item):
 
 	search = []
+	source = item['_source']
 
-	title = source.get("title")
+	title = source.get("title", "")
 	if title:
-		search.append(title.strip())
+		search.append(title)
 
-	summary = source.get("summary")
+	summary = source.get("summary", "")
 	if summary:
-		search.append(summary.strip())
+		search.append(summary)
 
-	source['search'] = search
+	categories = source.get("categories", "")
+	if categories:
+		search.extend(categories)
 
-	return source
+	if len(search) != 0:
+		item['_source']['search'] = search
+	elif 'search' in item['_source']:
+		del item['_source']['search']
+
+	return item
 
 def rss():
 
 	def transform(item):
-		item['_source'] = get_search(item['_source'])
+
+		source = item['_source']
+
+		if source.get("authors"):
+			source['authors'] = [
+				author.lower()
+				for author in
+				source['authors'] + [source['article_source']]
+			]
+
+		if source.get("categories"):
+			source['categories'] = [
+				cat.lower()
+				for cat in
+				source['categories']
+			]
+
+		tickers = source.get("tickers")
+		if tickers:
+			for ticker in tickers:
+				if ':' in ticker:
+					tickers.append(ticker.split(':')[1])
+			source['tickers'] = list(set(tickers))
+
+		source['abs_sentiment_score'] = abs(source['sentiment_score'])
+		source['title'] = source['title'].strip()
+		source['summary'] = source['summary'].strip()
+		
+		item['_source'] = source
+		item = get_search(item)
 		item['_index'] = "news"
+
 		return item
 
-	for file in (RSS_FOLDER / "old").iterdir():
+	for file in sorted((RSS_FOLDER / "old").iterdir()):
 
 		print("RSS:", file.name)
 
@@ -50,15 +88,28 @@ def cnbc():
 
 	def transform(item):
 		
-		item['_source'] = get_search(item['_source'])
+		if item['_source'].get("article_type"):
+			item['_source']['article_type'] = item['_source']['article_type'].strip().lower()
+
+		item['_source']['authors'] = item['_source']['authors'].strip().lower()
+		if item['_source']['authors'] == "cnbc.com":
+			item['_source']['authors'] = "cnbc"
+
+		item['_source']['abs_sentiment_score'] = abs(item['_source']['sentiment_score'])
+		item = get_search(item)
 		item['_index'] = "news"
 		item['_source']['source'] = "cnbc"
-		item['_source']['authors'] = item['_source']['authors'].strip()
-		item['_source']['article_type'] = item['_source']['article_type'].strip()
+
+		tickers = item['_source'].get("tickers")
+		if tickers:
+			for ticker in tickers:
+				if ":" in ticker:
+					tickers.append(ticker.split(":")[1].strip())
+			item['_source']['tickers'] = list(set(tickers))
 
 		return item
 
-	for file in (CNBC_FOLDER / "old").iterdir():
+	for file in sorted((CNBC_FOLDER / "old").iterdir()):
 
 		print("CNBC:", file.name)
 		if SUBSET and file.name.split("_")[2] not in SUBSET:
@@ -78,12 +129,23 @@ def cnbc():
 def google():
 
 	def transform(item):
-		item['_source'] = get_search(item['_source'])
+
+		item['_source']['abs_sentiment_score'] = abs(item['_source']['sentiment_score'])
+		item['_source']['authors'] = item['_source']['authors'].strip().lower()
+		item['_source']['title'] = item['_source']['title'].strip()
+		item = get_search(item)
 		item['_index'] = "news"
-		item['_source']['source'] = "google"
+
+		tickers = item['_source'].get("tickers")
+		if tickers:
+			for ticker in tickers:
+				if ":" in ticker:
+					tickers.append(ticker.split(":")[1].strip())
+			item['_source']['tickers'] = list(set(tickers))
+
 		return item
 
-	for file in (GOOGLE_FOLDER / "old").iterdir():
+	for file in sorted((GOOGLE_FOLDER / "old").iterdir()):
 
 		print("GOOGLE:", file.name)
 		if SUBSET and file.name.split("_")[2] not in SUBSET:
@@ -102,6 +164,6 @@ def google():
 
 if __name__ == '__main__':
 
-	rss()
-	cnbc()
 	google()
+	cnbc()
+	rss()

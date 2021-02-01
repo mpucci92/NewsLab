@@ -54,6 +54,13 @@ def download():
 
 			file = folder / "old" / name
 			blob.download_to_filename(file)
+			
+			if 'tar' in file.name:
+
+				with tar.open(file, "r:xz") as tar_file:
+					tar_file.extractall(path=file.parent)
+
+				file.unlink()
 
 if __name__ == '__main__':
 

@@ -114,6 +114,9 @@ ES_MAPPINGS = {
 				},
 				"sentiment_score" : {
 					"type" : "float"
+				},
+				"abs_sentiment_score" : {
+					"type" : "float"
 				}
 			}
 		}
@@ -172,7 +175,7 @@ def search_news(search_string="", sentiment=None, tickers=None, article_source=N
         filters.append(terms_filter("language", language))
 
     if authors:
-        filters.append(terms_filter("authors", tickers))
+        filters.append(terms_filter("authors", authors))
 
     if categories:
         filters.append(terms_filter("categories", categories))
@@ -226,7 +229,7 @@ def index():
 		with open(file, "r") as _file:
 			items.extend(json.loads(_file.read()))
 
-		if i > 0 and i % 10 == 0:
+		if i > 0 and i % 20 == 0:
 
 			print("Indexing", len(items))
 
