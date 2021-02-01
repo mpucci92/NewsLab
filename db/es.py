@@ -1,4 +1,5 @@
-from const import RSS_FOLDER, CNBC_FOLDER, GOOGLE_FOLDER, CONFIG
+from const import RSS_FOLDER, CNBC_FOLDER, GOOGLE_FOLDER
+from const import CONFIG, SUBSET
 
 from elasticsearch import Elasticsearch, helpers
 import json
@@ -13,7 +14,7 @@ ES_MAPPINGS = {
 			"analyzer" : {
 				"search_analyzer" : {
 					"tokenizer" : "classic",
-					"filter" : [
+					"filter" : [	
 						"classic",
 						"lowercase",
 						"stop",
@@ -193,15 +194,17 @@ def search_news(search_string="", sentiment=None, tickers=None, article_source=N
 
 def index():
 
-	# es = Elasticsearch([f"{CONFIG['ES_IP']}:{CONFIG['ES_PORT']}"])
-	es = Elasticsearch()
+	es = Elasticsearch([f"{CONFIG['ES_IP']}:{CONFIG['ES_PORT']}"], timeout=60_000)
+	# es = Elasticsearch(timeout=60_000)
 
-	try:
-		es.indices.delete("news")
-	except Exception as e:
-		print(e)
+	if not SUBSET:
 
-	es.indices.create("news", ES_MAPPINGS)
+		try:
+			es.indices.delete("news")
+		except Exception as e:
+			print(e)
+
+		es.indices.create("news", ES_MAPPINGS)
 
 	files = list((RSS_FOLDER / "new").iterdir())
 	files += list((CNBC_FOLDER / "new").iterdir())
@@ -209,9 +212,16 @@ def index():
 
 	items = []
 	total_indexed, total_failed = 0, 0
-	for i, file in enumerate(files):
+	for i, file in enumerate(sorted(files)):
 
 		print("Processing:", file.name)
+		if "_" in file.name:
+			sep, idx = "_", 2
+		else:
+			sep, idx = ".", 0
+
+		if SUBSET and file.name.split(sep)[idx] not in SUBSET:
+			continue
 
 		with open(file, "r") as _file:
 			items.extend(json.loads(_file.read()))
@@ -233,7 +243,21 @@ def index():
 
 			items = []
 
-	print("Total Indexed":, total_indexed)
+	print("Final Indexing", len(items))
+	if len(items) != 0:
+
+		indexed, failed = helpers.bulk(es,
+									   items,
+									   stats_only=True,
+									   raise_on_error=False)
+
+		print("Final Indexed:", indexed)
+		print("Final Failed:", failed)
+
+		total_indexed += indexed
+		total_failed += failed
+
+	print("Total Indexed:", total_indexed)
 	print("Total Failed:", total_failed)
 
 if __name__ == '__main__':

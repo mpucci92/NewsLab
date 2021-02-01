@@ -14,3 +14,5 @@ GOOGLE_FOLDER = Path("data/google/")
 
 with open(f"{DIR}/config.json", "r") as file:
 	CONFIG = json.loads(file.read())
+
+SUBSET = []
