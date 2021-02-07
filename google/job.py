@@ -126,9 +126,9 @@ def collect_news(ticker_coordinates, hash_cache, hashs):
 
 	items = []
 	N = len(ticker_coordinates)
-	for i, data in enumerate(ticker_coordinates.values[:1]):
+	for i, data in enumerate(ticker_coordinates.values):
 
-		print(f"Progress: {round(i / N * 100, 2)}%")
+		print(f"Querying for: {data}. Progress: {round(i / N * 100, 2)}%")
 
 		ticker, company_name = data
 		items.extend(fetch(ticker, hash_cache, hashs))
