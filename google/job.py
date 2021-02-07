@@ -92,17 +92,17 @@ def fetch(query, hash_cache, hashs):
 
 		published = item.get('published')
 		if published:
-			cleaned_item['timestamp'] = published
+			cleaned_item['published'] = published
 
 		published_parsed = item.get('published_parsed')
 		if published_parsed:
 			iso = time.strftime('%Y-%m-%dT%H:%M:%S', published_parsed)
 			cleaned_item['published_parsed'] = iso
 
-		authors = item.get('source', {})
-		authors = authors.get('title')
-		if authors:
-			cleaned_item['authors'] = authors
+		author = item.get('source', {})
+		author = author.get('title')
+		if author:
+			cleaned_item['author'] = author
 
 		source_href = item.get("source", {})
 		source_href = source_href.get("href")
@@ -150,7 +150,7 @@ def save(items, hash_cache):
 	with tar.open(xz_file, "x:xz") as tar_file:
 		tar_file.add(json_file, arcname=json_file.name)
 
-	os.unlink(json_file)
+	# os.unlink(json_file)
 	os.unlink(xz_file)
 
 def main():
