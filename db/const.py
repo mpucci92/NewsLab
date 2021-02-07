@@ -12,5 +12,7 @@ BUCKET = storage.Client().bucket("cnbc-storage")
 CNBC_FOLDER = Path("data/cnbc/")
 GOOGLE_FOLDER = Path("data/google/")
 
+SUBSET = []
+
 with open(f"{DIR}/../config.json", "r") as file:
 	CONFIG = json.loads(file.read())
