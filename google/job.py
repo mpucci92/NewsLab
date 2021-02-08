@@ -11,6 +11,9 @@ import time
 import socket
 socket.setdefaulttimeout(15)
 
+sys.path.append(f"{DIR}/..")
+from utils import send_metric, send_to_bucket
+
 ###################################################################################################
 
 URL = "https://news.google.com/rss/search?q={query}+when:7d&hl=en-CA&gl=CA&ceid=CA:en"
@@ -150,7 +153,9 @@ def save(items, hash_cache):
 	with tar.open(xz_file, "x:xz") as tar_file:
 		tar_file.add(json_file, arcname=json_file.name)
 
-	# os.unlink(json_file)
+	send_to_bucket("google", CONFIG['GCP']['RAW_BUCKET'], xz_file.name, xz_file.parent)
+
+	os.unlink(json_file)
 	os.unlink(xz_file)
 
 def main():
@@ -166,7 +171,9 @@ if __name__ == '__main__':
 	try:
 
 		main()
+		send_metric(CONFIG, "google_success_indicator", "int64_value", 1)
 
 	except Exception as e:
 
 		print(e)
+		send_metric(CONFIG, "google_success_indicator", "int64_value", 1)
