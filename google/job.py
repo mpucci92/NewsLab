@@ -1,4 +1,4 @@
-from const import DIR, SDATE, CONFIG, ENGINE
+from const import DIR, SDATE, CONFIG, ENGINE, logger
 from pathlib import Path
 from hashlib import md5
 import tarfile as tar
@@ -40,7 +40,7 @@ def get_ticker_coordinates():
 
 	except Exception as e:
 
-		print(e)
+		logger.warning(f"ticker coordinate error, {e}")
 		df = pd.read_csv(f"{DIR}/data/ticker_coordinates.csv")
 
 	return df[['ticker', 'name']]
@@ -129,9 +129,11 @@ def collect_news(ticker_coordinates, hash_cache, hashs):
 
 	items = []
 	N = len(ticker_coordinates)
-	for i, data in enumerate(ticker_coordinates.values):
+	for i, data in enumerate(ticker_coordinates.values[:1]):
 
-		print(f"Querying for: {data}. Progress: {round(i / N * 100, 2)}%")
+		queries = ' '.join(data)
+		progress = round(i / N * 100, 2)
+		logger.info(f"collecting news, {queries}, {progress}%")
 
 		ticker, company_name = data
 		items.extend(fetch(ticker, hash_cache, hashs))
@@ -153,7 +155,11 @@ def save(items, hash_cache):
 	with tar.open(xz_file, "x:xz") as tar_file:
 		tar_file.add(json_file, arcname=json_file.name)
 
-	send_to_bucket("google", CONFIG['GCP']['RAW_BUCKET'], xz_file.name, xz_file.parent)
+	send_to_bucket("google",
+				   CONFIG['GCP']['RAW_BUCKET'],
+				   xz_file.name,
+				   xz_file.parent,
+				   logger)
 
 	os.unlink(json_file)
 	os.unlink(xz_file)
@@ -163,10 +169,12 @@ def main():
 	ticker_coordinates = get_ticker_coordinates()
 	hash_cache, hashs = get_hash_cache()
 
-	items, hash_cache = collect_news(ticker_coordinates, hash_cache, hashs)
+	items, hash_cache = collect_news(ticker_coordinates, hash_cache, hashs)	
 	save(items, hash_cache)
 
 if __name__ == '__main__':
+
+	logger.info("main job, initializing")
 
 	try:
 
@@ -175,5 +183,7 @@ if __name__ == '__main__':
 
 	except Exception as e:
 
-		print(e)
+		logger.warning(f"main job error, {e}")
 		send_metric(CONFIG, "google_success_indicator", "int64_value", 1)
+
+	logger.info("main job, terminating")

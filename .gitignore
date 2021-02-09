@@ -2,3 +2,4 @@
 config.json
 news_config.json
 *.ipynb_checkpoints
+*log.log
