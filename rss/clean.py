@@ -54,6 +54,7 @@ DATE_FMTS = [
 	"%a, %d %b %Y %H:%M %z",
 	"%Y-%m-%d %H:%M:%S",
 	"%Y-%d-%m %H:%M:%S",
+	"%Y-%d-%mT%H:%M:%S",
 ]
 
 NEWS_DIR = f"{DIR}/news_data"

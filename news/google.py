@@ -1,3 +1,4 @@
+from const import get_ticker_coordinates, get_hash_cache
 from const import DIR, SDATE, CONFIG, ENGINE, logger
 from pathlib import Path
 from hashlib import md5
@@ -17,63 +18,9 @@ from utils import send_metric, send_to_bucket
 ###################################################################################################
 
 URL = "https://news.google.com/rss/search?q={query}+when:7d&hl=en-CA&gl=CA&ceid=CA:en"
-
 news_sources = pd.read_csv(f"{DIR}/data/news_sources.csv")
 
 ###################################################################################################
-
-def get_ticker_coordinates():
-
-	try:
-
-		df = pd.read_sql("""
-			SELECT
-				*
-			FROM
-				instruments
-			ORDER BY
-				market_cap
-				DESC
-		""", ENGINE)
-
-		df.to_csv(f"{DIR}/data/ticker_coordinates.csv", index=False)
-
-	except Exception as e:
-
-		logger.warning(f"ticker coordinate error, {e}")
-		df = pd.read_csv(f"{DIR}/data/ticker_coordinates.csv")
-
-	return df[['ticker', 'name']]
-
-def get_hash_cache():
-
-	try:
-
-		with open(f"{DIR}/data/hash_cache.json", "r") as file:
-			hash_cache = json.loads(file.read())
-
-		hash_cache = {
-			int(key) + 1 : hash_cache[key]
-			for key in hash_cache
-		}
-		del hash_cache[7]
-		hash_cache[0] = []
-
-	except Exception as e:
-
-		print(e)
-		hash_cache = {
-			i : []
-			for i in range(7)
-		}
-
-	hashs = set([
-		_hash
-		for hash_list in hash_cache.values()
-		for _hash in hash_list
-	])
-
-	return hash_cache, hashs
 
 def fetch(query, hash_cache, hashs):
 
@@ -129,11 +76,11 @@ def collect_news(ticker_coordinates, hash_cache, hashs):
 
 	items = []
 	N = len(ticker_coordinates)
-	for i, data in enumerate(ticker_coordinates.values[:1]):
+	for i, data in enumerate(ticker_coordinates.values[:15]):
 
 		queries = ' '.join(data)
 		progress = round(i / N * 100, 2)
-		logger.info(f"collecting news, {queries}, {progress}%")
+		logger.info(f"collecting google news, {queries}, {progress}%")
 
 		ticker, company_name = data
 		items.extend(fetch(ticker, hash_cache, hashs))
@@ -143,10 +90,10 @@ def collect_news(ticker_coordinates, hash_cache, hashs):
 
 def save(items, hash_cache):
 
-	json_file = Path(f"{DIR}/news_data/{SDATE}.json")
+	json_file = Path(f"{DIR}/news_data/google/{SDATE}.json")
 	xz_file = json_file.with_suffix(".tar.xz")
 
-	with open(f"{DIR}/data/hash_cache.json", "w") as file:
+	with open(f"{DIR}/data/google_hash_cache.json", "w") as file:
 		file.write(json.dumps(hash_cache))
 
 	with open(json_file, "w") as file:
@@ -161,20 +108,20 @@ def save(items, hash_cache):
 				   xz_file.parent,
 				   logger)
 
-	os.unlink(json_file)
+	# os.unlink(json_file)
 	os.unlink(xz_file)
 
 def main():
 
 	ticker_coordinates = get_ticker_coordinates()
-	hash_cache, hashs = get_hash_cache()
+	hash_cache, hashs = get_hash_cache('google')
 
 	items, hash_cache = collect_news(ticker_coordinates, hash_cache, hashs)	
 	save(items, hash_cache)
 
 if __name__ == '__main__':
 
-	logger.info("main job, initializing")
+	logger.info("google job, initializing")
 
 	try:
 
@@ -183,7 +130,7 @@ if __name__ == '__main__':
 
 	except Exception as e:
 
-		logger.warning(f"main job error, {e}")
+		logger.warning(f"google job error, {e}")
 		send_metric(CONFIG, "google_success_indicator", "int64_value", 1)
 
-	logger.info("main job, terminating")
+	logger.info("google job, terminating")
