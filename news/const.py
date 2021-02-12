@@ -6,6 +6,8 @@ import sys, os
 import pytz
 import json
 
+###################################################################################################
+
 DIR = os.path.realpath(os.path.dirname(__file__))
 DATE = datetime.now(pytz.timezone("Canada/Eastern"))
 SDATE = DATE.strftime("%Y-%m-%d")
@@ -42,7 +44,7 @@ if not os.path.isfile(file):
     df = pd.DataFrame(columns = ['ticker', 'name'])
     df.to_csv(file, index=False)
 
-########################################################################################3##########
+###################################################################################################
 
 def get_ticker_coordinates():
 
@@ -89,7 +91,7 @@ def get_hash_cache(key):
 
     except Exception as e:
 
-        print(e)
+        logger.warning(f"hash cache error. {key}. {e}")
         hash_cache = {
             i : []
             for i in range(7)

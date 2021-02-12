@@ -87,8 +87,7 @@ class Feeds(Thread):
 			self.last_45[self.feed].append(entry_hash)
 			self.last_45[self.feed] = self.last_45[self.feed][-self.WINDOW:]
 
-			utc_now = datetime.now(tz=timezone.utc).strftime("%Y-%d-%m %H:%M:%S.%f")
-			entry['oscrap_acquisition_datetime'] = utc_now
+			entry['acquisition_datetime'] = datetime.now(tz=timezone.utc).isoformat()[:19]
 			entry['oscrap_source'] = self.source
 
 			print(self.source)
