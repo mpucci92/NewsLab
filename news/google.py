@@ -8,6 +8,7 @@ import feedparser
 import sys, os
 import json
 import time
+import uuid
 
 import socket
 socket.setdefaulttimeout(15)
@@ -19,6 +20,7 @@ from utils import send_metric, send_to_bucket
 
 URL = "https://news.google.com/rss/search?q={query}+when:7d&hl=en-CA&gl=CA&ceid=CA:en"
 news_sources = pd.read_csv(f"{DIR}/data/news_sources.csv")
+PATH = Path(f"{DIR}/news_data/google/")
 
 ###################################################################################################
 
@@ -70,11 +72,15 @@ def fetch(query, hash_cache, hashs):
 		hash_cache[0].append(_hash)
 		cleaned_items.append(cleaned_item)
 
-	return cleaned_items
+	if len(cleaned_items) == 0:
+		return
+
+	fname = str(uuid.uuid4())
+	with open(PATH / f"{fname}.json", "w") as file:
+		file.write(json.dumps(cleaned_items))
 
 def collect_news(ticker_coordinates, hash_cache, hashs):
 
-	items = []
 	N = len(ticker_coordinates)
 	for i, data in enumerate(ticker_coordinates.values[:15]):
 
@@ -83,41 +89,15 @@ def collect_news(ticker_coordinates, hash_cache, hashs):
 		logger.info(f"collecting google news, {queries}, {progress}%")
 
 		ticker, company_name = data
-		items.extend(fetch(ticker, hash_cache, hashs))
-		items.extend(fetch(company_name, hash_cache, hashs))
-
-	return items, hash_cache
-
-def save(items, hash_cache):
-
-	json_file = Path(f"{DIR}/news_data/google/{SDATE}.json")
-	xz_file = json_file.with_suffix(".tar.xz")
-
-	with open(f"{DIR}/data/google_hash_cache.json", "w") as file:
-		file.write(json.dumps(hash_cache))
-
-	with open(json_file, "w") as file:
-		file.write(json.dumps(items))
-
-	with tar.open(xz_file, "x:xz") as tar_file:
-		tar_file.add(json_file, arcname=json_file.name)
-
-	send_to_bucket("google",
-				   CONFIG['GCP']['RAW_BUCKET'],
-				   xz_file.name,
-				   xz_file.parent,
-				   logger)
-
-	# os.unlink(json_file)
-	os.unlink(xz_file)
+		fetch(ticker, hash_cache, hashs)
+		fetch(company_name, hash_cache, hashs)
 
 def main():
 
 	ticker_coordinates = get_ticker_coordinates()
 	hash_cache, hashs = get_hash_cache('google')
-
-	items, hash_cache = collect_news(ticker_coordinates, hash_cache, hashs)	
-	save(items, hash_cache)
+	collect_news(ticker_coordinates, hash_cache, hashs)	
+	save('google', path, hash_cache, send_to_bucket)
 
 if __name__ == '__main__':
 

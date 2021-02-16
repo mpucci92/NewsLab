@@ -1,4 +1,4 @@
-from const import get_ticker_coordinates, get_hash_cache
+from const import get_ticker_coordinates, get_hash_cache, save
 from const import DIR, SDATE, CONFIG, logger, ENGINE
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
@@ -8,6 +8,7 @@ import tarfile as tar
 import pandas as pd
 import sys, os
 import json
+import uuid
 
 sys.path.append(f"{DIR}/..")
 from utils import send_metric, send_to_bucket, request
@@ -15,6 +16,7 @@ from utils import send_metric, send_to_bucket, request
 ###################################################################################################
 
 URL = "https://www.cnbc.com/quotes/?symbol={ticker}&qsearchterm={ticker}&tab=news"
+PATH = Path(f"{DIR}/news_data/cnbc/")
 
 ###################################################################################################
 
@@ -70,51 +72,29 @@ def fetch(ticker, hash_cache, hashs):
 		item['acquisition_datetime'] = datetime.now().isoformat()[:19]
 		items.append(item)
 
-	return items
+	if len(items) == 0:
+		return
 
-def get_news(tickers, hash_cache, hashs):
+	fname = str(uuid.uuid4())
+	with open(PATH / f"{fname}.json", "w") as file:
+		file.write(json.dumps(items))
 
-	items = []
+def collect_news(tickers, hash_cache, hashs):
+
 	N = len(tickers)
 	for i, ticker in enumerate(tickers):
 
 		progress = round(i / N * 100, 2)
 		logger.info(f"collecting cnbc news, {ticker}, {progress}%")
-		items.extend(fetch(ticker, hash_cache, hashs))
-
-	return items
-
-def save(items, hash_cache):
-
-	json_file = Path(f"{DIR}/news_data/cnbc/{SDATE}.json")
-	xz_file = json_file.with_suffix(".tar.xz")
-
-	with open(f"{DIR}/data/cnbc_hash_cache.json", "w") as file:
-		file.write(json.dumps(hash_cache))
-
-	with open(json_file, "w") as file:
-		file.write(json.dumps(items))
-
-	with tar.open(xz_file, "x:xz") as tar_file:
-		tar_file.add(json_file, arcname=json_file.name)
-
-	send_to_bucket("cnbc",
-				   CONFIG['GCP']['RAW_BUCKET'],
-				   xz_file.name,
-				   xz_file.parent,
-				   logger)
-
-	# os.unlink(json_file)
-	os.unlink(xz_file)
+		fetch(ticker, hash_cache, hashs)
 
 def main():
 
 	tickers = get_ticker_coordinates()
 	tickers = tickers.ticker.values.tolist()
 	hash_cache, hashs = get_hash_cache('cnbc')
-
-	items = get_news(tickers, hash_cache, hashs)
-	save(items, hash_cache)
+	collect_news(tickers, hash_cache, hashs)
+	save('cnbc', PATH, hash_cache, send_to_bucket)
 
 if __name__ == '__main__':
 

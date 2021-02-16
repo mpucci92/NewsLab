@@ -104,3 +104,43 @@ def get_hash_cache(key):
     ])
 
     return hash_cache, hashs
+
+def save(key, path, hash_cache, send_to_bucket):
+
+    items = []
+    for file in path.iterdir():
+        
+        if file.name == ".gitignore":
+            continue
+
+        with open(file, "r") as _file:
+            items.extend(json.loads(_file.read()))
+
+    json_file = Path(f"{DIR}/news_data/{key}/{SDATE}.json")
+    xz_file = json_file.with_suffix(".tar.xz")
+
+    with open(f"{DIR}/data/{key}_hash_cache.json", "w") as file:
+        file.write(json.dumps(hash_cache))
+
+    with open(json_file, "w") as file:
+        file.write(json.dumps(items))
+
+    with tar.open(xz_file, "x:xz") as tar_file:
+        tar_file.add(json_file, arcname=json_file.name)
+
+    send_to_bucket(key,
+                   CONFIG['GCP']['RAW_BUCKET'],
+                   xz_file.name,
+                   xz_file.parent,
+                   logger)
+
+    logger.info(f"{key} job, sleeping")
+    time.sleep(10)
+
+    for file in path.iterdir():
+        if file.name == ".gitignore":
+            continue
+        file.unlink()
+
+    os.unlink(json_file)
+    os.unlink(xz_file)
