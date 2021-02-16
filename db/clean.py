@@ -16,22 +16,22 @@ import time
 import uuid
 import re
 
-sys.path.append(f"{DIR}/../utils")
-from gcp import send_gcp_metric
+sys.path.append(f"{DIR}/..")
+from utils import send_gcp_metric
 
 ###################################################################################################
 
 ES_CLIENT = Elasticsearch(CONFIG['ES_IP'], port=CONFIG['ES_PORT'], http_comprress=True, timeout=30)
 HEADERS = {"Content-Type" : "application/json"}
 
-df = pd.read_csv("data/tickers.csv")
+df = pd.read_csv(f"{DIR}/data/tickers.csv")
 df['FullCode'] = df.ExchangeCode + ":" + df.Ticker
 
 fullcode_set = set(df.FullCode)
 ticker_set = set(df.Ticker)
 href_set = {"stock", "stocks", "symbol"}
 
-df = pd.read_csv("data/exchanges.csv")
+df = pd.read_csv(f"{DIR}/data/exchanges.csv")
 exchange_set = df.Acronym.dropna().tolist()
 exchange_set += df['Exchange Name'].dropna().tolist()
 
@@ -57,7 +57,11 @@ DATE_FMTS = [
 	"%Y-%d-%mT%H:%M:%S",
 ]
 
-NEWS_DIR = f"{DIR}/news_data"
+NEWS_DIRS = [
+	f"{DIR}/../rss/news_data",
+	f"{DIR}/../news/google/news_data",
+	f"{DIR}/../news/cnbc/news_data",
+]
 
 ###################################################################################################
 

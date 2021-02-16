@@ -4,15 +4,16 @@ from flask import request, Flask, render_template
 from gevent.pywsgi import WSGIServer
 from datetime import datetime
 from finbert_utils import *
-from const import DIR
 import pandas as pd
 import json
+import os
 
 ###################################################################################################
 
+DIR = os.path.realpath(os.path.dirname(__file__))
 CHUNK_SIZE = 25
 
-model = BertForSequenceClassification.from_pretrained(f"{DIR}/data/sentiment_model",
+model = BertForSequenceClassification.from_pretrained(f"{DIR}/sentiment_model",
 													  num_labels=3,
 													  cache_dir=None)
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")

@@ -104,7 +104,7 @@ def save(items, hash_cache):
 				   xz_file.parent,
 				   logger)
 
-	os.unlink(json_file)
+	# os.unlink(json_file)
 	os.unlink(xz_file)
 
 def main():
