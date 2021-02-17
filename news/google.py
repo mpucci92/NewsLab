@@ -1,8 +1,7 @@
 from const import get_ticker_coordinates, get_hash_cache, save
-from const import DIR, SDATE, CONFIG, ENGINE, logger
+from const import DIR, SDATE, CONFIG, logger
 from pathlib import Path
 from hashlib import md5
-import tarfile as tar
 import pandas as pd
 import feedparser
 import sys, os
@@ -82,7 +81,7 @@ def fetch(query, hash_cache, hashs):
 def collect_news(ticker_coordinates, hash_cache, hashs):
 
 	N = len(ticker_coordinates)
-	for i, data in enumerate(ticker_coordinates.values[:1]):
+	for i, data in enumerate(ticker_coordinates.values):
 
 		queries = ' '.join(data)
 		progress = round(i / N * 100, 2)

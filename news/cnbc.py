@@ -1,11 +1,9 @@
 from const import get_ticker_coordinates, get_hash_cache, save
-from const import DIR, SDATE, CONFIG, logger, ENGINE
+from const import DIR, SDATE, CONFIG, logger
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from pathlib import Path
 from hashlib import md5
-import tarfile as tar
-import pandas as pd
 import sys, os
 import json
 import uuid
@@ -82,7 +80,7 @@ def fetch(ticker, hash_cache, hashs):
 def collect_news(tickers, hash_cache, hashs):
 
 	N = len(tickers)
-	for i, ticker in enumerate(tickers[:1]):
+	for i, ticker in enumerate(tickers):
 
 		progress = round(i / N * 100, 2)
 		logger.info(f"collecting cnbc news, {ticker}, {progress}%")
