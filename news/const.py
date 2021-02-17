@@ -1,5 +1,4 @@
 from datetime import datetime
-from pathlib import Path
 import sqlalchemy as sql
 import tarfile as tar
 import pandas as pd
@@ -119,7 +118,8 @@ def save(key, path, hash_cache, send_to_bucket):
         with open(file, "r") as _file:
             items.extend(json.loads(_file.read()))
 
-    json_file = Path(f"{DIR}/news_data/{key}/{SDATE}.json")
+    json_file = path.parent.parent / 'news_data_backup'
+    json_file = json_file / f'{key}/{SDATE}.json'
     xz_file = json_file.with_suffix(".tar.xz")
 
     with open(f"{DIR}/data/{key}_hash_cache.json", "w") as file:
@@ -139,7 +139,7 @@ def save(key, path, hash_cache, send_to_bucket):
 
     logger.info(f"{key} job, sleeping")
     time.sleep(1)
-    
+
     os.unlink(json_file)
     os.unlink(xz_file)
 
