@@ -82,7 +82,7 @@ def fetch(ticker, hash_cache, hashs):
 def collect_news(tickers, hash_cache, hashs):
 
 	N = len(tickers)
-	for i, ticker in enumerate(tickers):
+	for i, ticker in enumerate(tickers[:1]):
 
 		progress = round(i / N * 100, 2)
 		logger.info(f"collecting cnbc news, {ticker}, {progress}%")

@@ -1,4 +1,4 @@
-from const import get_ticker_coordinates, get_hash_cache
+from const import get_ticker_coordinates, get_hash_cache, save
 from const import DIR, SDATE, CONFIG, ENGINE, logger
 from pathlib import Path
 from hashlib import md5
@@ -82,7 +82,7 @@ def fetch(query, hash_cache, hashs):
 def collect_news(ticker_coordinates, hash_cache, hashs):
 
 	N = len(ticker_coordinates)
-	for i, data in enumerate(ticker_coordinates.values[:15]):
+	for i, data in enumerate(ticker_coordinates.values[:1]):
 
 		queries = ' '.join(data)
 		progress = round(i / N * 100, 2)
@@ -97,7 +97,7 @@ def main():
 	ticker_coordinates = get_ticker_coordinates()
 	hash_cache, hashs = get_hash_cache('google')
 	collect_news(ticker_coordinates, hash_cache, hashs)	
-	save('google', path, hash_cache, send_to_bucket)
+	save('google', PATH, hash_cache, send_to_bucket)
 
 if __name__ == '__main__':
 

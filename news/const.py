@@ -1,10 +1,13 @@
 from datetime import datetime
+from pathlib import Path
 import sqlalchemy as sql
+import tarfile as tar
 import pandas as pd
 import logging
 import sys, os
 import pytz
 import json
+import time
 
 ###################################################################################################
 
@@ -135,12 +138,12 @@ def save(key, path, hash_cache, send_to_bucket):
                    logger)
 
     logger.info(f"{key} job, sleeping")
-    time.sleep(10)
+    time.sleep(1)
+    
+    os.unlink(json_file)
+    os.unlink(xz_file)
 
     for file in path.iterdir():
         if file.name == ".gitignore":
             continue
         file.unlink()
-
-    os.unlink(json_file)
-    os.unlink(xz_file)
