@@ -1,5 +1,6 @@
 from const import get_ticker_coordinates, get_hash_cache, save
 from const import DIR, SDATE, CONFIG, logger
+from datetime import datetime
 from pathlib import Path
 from hashlib import md5
 import pandas as pd
@@ -18,7 +19,7 @@ from utils import send_metric, send_to_bucket
 ###################################################################################################
 
 URL = "https://news.google.com/rss/search?q={query}+when:7d&hl=en-CA&gl=CA&ceid=CA:en"
-news_sources = pd.read_csv(f"{DIR}/data/news_sources.csv")
+news_sources = list(pd.read_csv(f"{DIR}/data/news_sources.csv").news_source)
 PATH = Path(f"{DIR}/news_data/google/")
 
 ###################################################################################################
@@ -50,10 +51,13 @@ def fetch(query, hash_cache, hashs):
 			iso = time.strftime('%Y-%m-%dT%H:%M:%S', published_parsed)
 			cleaned_item['published_parsed'] = iso
 
-		author = item.get('source', {})
-		author = author.get('title')
-		if author:
-			cleaned_item['author'] = author
+		article_source = item.get('source', {})
+		article_source = article_source.get('title')
+		if article_source:
+			cleaned_item['article_source'] = article_source
+
+		if article_source not in news_sources:
+			continue
 
 		source_href = item.get("source", {})
 		source_href = source_href.get("href")
@@ -69,6 +73,8 @@ def fetch(query, hash_cache, hashs):
 
 		hashs.add(_hash)
 		hash_cache[0].append(_hash)
+
+		cleaned_item['acquisition_datetime'] = datetime.now().isoformat()[:19]
 		cleaned_items.append(cleaned_item)
 
 	if len(cleaned_items) == 0:

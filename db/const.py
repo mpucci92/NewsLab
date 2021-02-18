@@ -14,5 +14,5 @@ GOOGLE_FOLDER = Path("news_data/google/")
 
 SUBSET = []
 
-with open(f"{DIR}/../config.json", "r") as file:
+with open(f"{DIR}/../news_config.json", "r") as file:
 	CONFIG = json.loads(file.read())
