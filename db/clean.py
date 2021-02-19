@@ -116,8 +116,16 @@ def clean(item):
 	if links:
 		item['link'] = links[0]
 
+	fullcodes = re.findall(TICKER_PAT, item['title'])
+	for fullcode in fullcodes:		
+		validate(fullcode, ticker_matches, ticker_misses)
+
+	symbols = re.findall(TICKER_PAT2, item['title'])
+	for symbol in symbols:
+		validate(symbol[1:-1], ticker_matches, ticker_misses)
+
 	###############################################################################################
-	## Author and Categories
+	## RSS Specific
 
 	if source == "rss":
 
@@ -319,6 +327,7 @@ def clean(item):
 			if ':' in ticker:
 				ticker_matches.append(ticker.split(':')[1])
 		new_item['tickers'] = list(set(ticker_matches))
+		print(source, new_item['tickers'])
 
 	if ticker_misses:
 		new_item['_tickers'] = list(set(ticker_misses))
@@ -438,15 +447,15 @@ def cleaning_loop():
 			for item, score in zip(new_items, scores):
 				item['_source']['sentiment'] = score['prediction']
 				item['_source']['sentiment_score'] = score['sentiment_score']
-				item['_source']['abs_sentiment_score'] = abs(score['sentiment_score'])
+				item['_source']['abs_sentiment_score'] = abs(score['sentiment_score'])	
 
 			# successes, failures = helpers.bulk(ES_CLIENT,
 			# 								   new_items,
 			# 								   stats_only=True,
 			# 								   raise_on_error=False)
 			
-			print(successes, failures)
-			with open(f"{DIR}/cleaned_data/{str(uuid.uuid4())}.txt", "w") as file:
+			# print(successes, failures)
+			with open(f"{DIR}/cleaned_data/{str(uuid.uuid4())}.json", "w") as file:
 				file.write(json.dumps(new_items))
 
 			new_items = []
@@ -456,4 +465,3 @@ def cleaning_loop():
 if __name__ == '__main__':
 
 	cleaning_loop()
-

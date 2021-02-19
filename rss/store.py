@@ -15,18 +15,13 @@ def compress_files():
 	filedate = datetime.now() - timedelta(days = 1)
 	filedate = filedate.strftime('%Y-%m-%d')
 	
-	raw_txt = f'{DIR}/news_data_backup/{filedate}.txt'
+	raw_txt = f'{DIR}/news_data_backup/{filedate}.json'
 	raw_tar = f'{DIR}/news_data_backup/{filedate}.tar.xz'
 
 	files = os.listdir(f"{DIR}/news_data")
 	files = [f"{DIR}/news_data/{file}" for file in files]
 	files = sorted(files, key=os.path.getmtime)[::-1]
 	files.remove(f"{DIR}/news_data/.gitignore")
-
-	cfiles = os.listdir(f"{DIR}/cleaned_news_data")
-	cfiles = [f"{DIR}/cleaned_news_data/{file}" for file in cfiles]
-	cfiles = sorted(cfiles, key=os.path.getmtime)[::-1]
-	cfiles.remove(f"{DIR}/cleaned_news_data/.gitignore")
 
 	###############################################################################################
 
@@ -161,15 +156,6 @@ if __name__ == '__main__':
 			os.path.dirname(raw_tar),
 			logger=logger
 		)
-
-		send_to_bucket(
-			f"cleaned_{CONFIG['gcp_bucket_prefix']}",
-			CONFIG['gcp_bucket_name'],
-			os.path.basename(cleaned_tar),
-			os.path.dirname(cleaned_tar),
-			logger=logger
-		)
-		os.remove(cleaned_tar)
 
 		logger.info(f"RSS,Storage,Success,")
 

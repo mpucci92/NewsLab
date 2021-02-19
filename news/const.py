@@ -109,12 +109,11 @@ def get_hash_cache(key):
 
 def save(key, path, hash_cache, send_to_bucket):
 
-    items = []
-    for file in path.iterdir():
-        
-        if file.name == ".gitignore":
-            continue
+    files = list(path.iterdir())
+    files.remove(path / ".gitignore")
 
+    items = []
+    for file in files:
         with open(file, "r") as _file:
             items.extend(json.loads(_file.read()))
 
@@ -141,9 +140,6 @@ def save(key, path, hash_cache, send_to_bucket):
     time.sleep(1)
 
     os.unlink(json_file)
-    os.unlink(xz_file)
 
-    for file in path.iterdir():
-        if file.name == ".gitignore":
-            continue
+    for file in files:
         file.unlink()

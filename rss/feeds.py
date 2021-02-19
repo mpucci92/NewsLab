@@ -95,6 +95,6 @@ class Feeds(Thread):
 
 		if len(self.entries) > 0:
 
-			with open(f"{DIR}/news_data/{str(uuid.uuid4())}.txt", "w") as file:
+			with open(f"{DIR}/news_data/{str(uuid.uuid4())}.json", "w") as file:
 				file.write(json.dumps(self.entries))
 			self.entries = []
