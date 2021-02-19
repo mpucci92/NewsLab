@@ -5,7 +5,7 @@ import sys, os
 import json
 
 sys.path.append(f"{DIR}/..")
-from utils import send_to_bucket
+from utils import send_to_bucket, send_metric
 
 def save():
 
@@ -27,7 +27,7 @@ def save():
 		"rss" : 0
 	}
 	for item in items:
-		counts[item['source']] += 1
+		counts[item['_source']['source']] += 1
 
 	with open(json_file, "w") as file:
 		file.write(json.dumps(items))
@@ -41,8 +41,15 @@ def save():
 				   xz_file.parent,
 				   logger)
 
+	for key, count in counts.items():
+		send_metric(CONFIG, f"{key}_clean_news_count", "int64_value", count)
+
 	json_file.unlink()
-	tar_file.unlink()
+	xz_file.unlink()
 
 	for file in files:
 		file.unlink()
+
+if __name__ == '__main__':
+
+	save()

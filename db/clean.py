@@ -327,7 +327,6 @@ def clean(item):
 			if ':' in ticker:
 				ticker_matches.append(ticker.split(':')[1])
 		new_item['tickers'] = list(set(ticker_matches))
-		print(source, new_item['tickers'])
 
 	if ticker_misses:
 		new_item['_tickers'] = list(set(ticker_misses))

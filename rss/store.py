@@ -88,41 +88,6 @@ def compress_files():
 
 	###############################################################################################
 
-	ctr = 0
-	data, hashes = list(), set()
-	for file in cfiles:
-
-		with open(file, "r") as data_file:
-			items = json.loads(data_file.read())
-
-		for item in items:
-
-			ctr += 1
-
-			hash_ = sha256(
-				json.dumps(item).encode()
-			).hexdigest()
-
-			if hash_ in hashes:
-				continue
-
-			data.append(item)
-			hashes.add(hash_)
-
-	send_gcp_metric(CONFIG, "rss_daily_clean_uniques", "int64_value", len(hashes))
-	send_gcp_metric(CONFIG, "rss_daily_clean_total", "int64_value", ctr)
-
-	cleaned_txt = f"{DIR}/cleaned_news_data/{filedate}.txt"
-	cleaned_tar = cleaned_txt[:-4] + ".tar.xz"
-
-	with open(cleaned_txt, "w") as file:
-		file.write(json.dumps(data))
-
-	with tar.open(cleaned_tar, mode="x:xz") as tar_file:
-		tar_file.add(cleaned_txt, arcname=os.path.basename(cleaned_txt))
-
-	###############################################################################################
-
 	time.sleep(600)
 
 	file_size = os.stat(raw_tar).st_size / 1_000_000

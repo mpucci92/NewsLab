@@ -107,7 +107,7 @@ def get_hash_cache(key):
 
     return hash_cache, hashs
 
-def save(key, path, hash_cache, send_to_bucket):
+def save(key, path, hash_cache, send_to_bucket, send_metric):
 
     files = list(path.iterdir())
     files.remove(path / ".gitignore")
@@ -135,6 +135,8 @@ def save(key, path, hash_cache, send_to_bucket):
                    xz_file.name,
                    xz_file.parent,
                    logger)
+
+    send_metric(CONFIG, f"{key}_raw_news_count", "int64_value", len(items))
 
     logger.info(f"{key} job, sleeping")
     time.sleep(1)

@@ -78,10 +78,9 @@ def send_metric(CONFIG, metric_name, metric_type, metric):
 	project_name = METRIC_CLIENT.project_path(CONFIG['GCP']['PROJECT_ID'])
 	METRIC_CLIENT.create_time_series(project_name, [series])
 
-def delete_gcp_metric():
+def delete_gcp_metric(metric_name):
 
 	project_id = CONFIG['GCP']['PROJECT_ID']
-	metric_name = "test_indicator"
 	name = f"projects/{project_id}/metricDescriptors/custom.googleapis.com/{metric_name}"	
 
 	METRIC_CLIENT.delete_metric_descriptor(name)
@@ -228,10 +227,17 @@ if __name__ == '__main__':
 
 	# bucket_backup()
 
+	## RSS
+	# create_gcp_metric("rss_raw_news_count", "INT64")
+	# create_gcp_metric("rss_clean_news_count", "INT64")
+
 	## Google
 	# create_gcp_metric("google_success_indicator", "INT64")
+	# create_gcp_metric("google_raw_news_count", "INT64")
+	# create_gcp_metric("google_clean_news_count", "INT64")
 
 	## CNBC
 	# create_gcp_metric("cnbc_success_indicator", "INT64")
-
+	# create_gcp_metric("cnbc_raw_news_count", "INT64")
+	# create_gcp_metric("cnbc_clean_news_count", "INT64")
 	pass
