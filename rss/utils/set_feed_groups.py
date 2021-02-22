@@ -16,6 +16,7 @@ groups = [
     ["GlobeNewsWire"],
     ["Benzinga"],
     ["NY Times"],
+    ["Google"],
     ["CNBC", "Investing"],
     ["BBC", "Wall Street Journal"],
     ["MarketWatch", "Yahoo Finance", "Bank of Canada", "Bank of England"]
