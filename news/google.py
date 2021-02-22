@@ -32,7 +32,10 @@ def fetch(query, hash_cache, hashs):
 	cleaned_items = []
 	for item in items['entries']:
 
-		cleaned_item = {}
+		cleaned_item = {
+			'search_query' : query,
+			'_source' : 'google'
+		}
 
 		title = item.get('title')
 		if title:
@@ -63,9 +66,6 @@ def fetch(query, hash_cache, hashs):
 		source_href = source_href.get("href")
 		if source_href:
 			cleaned_item['source_href'] = source_href
-
-		cleaned_item['search_query'] = query
-		cleaned_item['source'] = 'google'
 
 		_hash = md5(json.dumps(cleaned_item).encode()).hexdigest()
 		if _hash in hashs:

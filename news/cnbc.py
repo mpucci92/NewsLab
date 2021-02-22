@@ -35,7 +35,7 @@ def fetch(ticker, hash_cache, hashs):
 			'title' : title.text,
 			'article_source' : source.text,
 			'links' : [],
-			'source' : 'cnbc'
+			'_source' : 'cnbc'
 		}
 
 		ts = timestamp.text

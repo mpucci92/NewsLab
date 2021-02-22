@@ -107,7 +107,7 @@ def clean(item):
 	contribs = []
 	tables = []
 
-	source = item['source']
+	source = item['_source']
 
 	###############################################################################################
 	## Cleaning
