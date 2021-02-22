@@ -92,7 +92,7 @@ def main():
 	tickers = tickers.ticker.values.tolist()
 	hash_cache, hashs = get_hash_cache('cnbc')
 	collect_news(tickers, hash_cache, hashs)
-	save('cnbc', PATH, hash_cache, send_to_bucket)
+	save('cnbc', PATH, hash_cache, send_to_bucket, send_metric)
 
 if __name__ == '__main__':
 
@@ -106,7 +106,7 @@ if __name__ == '__main__':
 	except Exception as e:
 
 		logger.warning(f"cnbc job error, {e}")
-		send_metric(CONFIG, "cnbc_success_indicator", "int64_value", 1)
+		send_metric(CONFIG, "cnbc_success_indicator", "int64_value", 0)
 
 	logger.info("cnbc job, terminating")
 

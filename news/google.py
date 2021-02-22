@@ -102,7 +102,7 @@ def main():
 	ticker_coordinates = get_ticker_coordinates()
 	hash_cache, hashs = get_hash_cache('google')
 	collect_news(ticker_coordinates, hash_cache, hashs)	
-	save('google', PATH, hash_cache, send_to_bucket)
+	save('google', PATH, hash_cache, send_to_bucket, send_metric)
 
 if __name__ == '__main__':
 
@@ -116,6 +116,6 @@ if __name__ == '__main__':
 	except Exception as e:
 
 		logger.warning(f"google job error, {e}")
-		send_metric(CONFIG, "google_success_indicator", "int64_value", 1)
+		send_metric(CONFIG, "google_success_indicator", "int64_value", 0)
 
 	logger.info("google job, terminating")
