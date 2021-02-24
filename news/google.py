@@ -1,9 +1,11 @@
 from helpers import get_ticker_coordinates, get_hash_cache, save
 from const import DIR, SDATE, CONFIG, logger
 from datetime import datetime
+import multiprocessing as mp
 from pathlib import Path
 from hashlib import md5
 import pandas as pd
+import numpy as np
 import feedparser
 import sys, os
 import json
@@ -18,7 +20,7 @@ from utils import send_metric, send_to_bucket
 
 ###################################################################################################
 
-URL = "https://news.google.com/rss/search?q={query}+when:7d&hl=en-CA&gl=CA&ceid=CA:en"
+URL = "https://news.google.com/rss/search?q={query}+when:1d&hl=en-CA&gl=CA&ceid=CA:en"
 news_sources = list(pd.read_csv(f"{DIR}/data/news_sources.csv").news_source)
 PATH = Path(f"{DIR}/news_data/google/")
 
@@ -78,6 +80,7 @@ def fetch(query, hash_cache, hashs):
 			continue
 
 		hashs.add(_hash)
+
 		hash_cache[SDATE].append(_hash)
 
 		cleaned_item['acquisition_datetime'] = datetime.now().isoformat()[:19]
@@ -90,24 +93,48 @@ def fetch(query, hash_cache, hashs):
 	with open(PATH / f"{fname}.json", "w") as file:
 		file.write(json.dumps(cleaned_items))
 
-def collect_news(ticker_coordinates, hash_cache, hashs):
+def collect_news(ticker_coordinates, hash_cache, hashs, errors):
 
-	N = len(ticker_coordinates)
-	for i, data in enumerate(ticker_coordinates.values):
+	try:
 
-		queries = ' '.join(data)
-		progress = round(i / N * 100, 2)
-		logger.info(f"collecting google news, {queries}, {progress}%")
+		N = len(ticker_coordinates)
+		for i, data in enumerate(ticker_coordinates.values):
 
-		ticker, company_name = data
-		fetch(ticker, hash_cache, hashs)
-		fetch(company_name, hash_cache, hashs)
+			queries = ' '.join(data)
+			progress = round(i / N * 100, 2)
+			logger.info(f"collecting google news, {queries}, {progress}%")
+
+			ticker, company_name = data
+			fetch(ticker, hash_cache, hashs)
+			fetch(company_name, hash_cache, hashs)
+
+	except Exception as e:
+
+		errors.put(e)
 
 def main():
 
 	ticker_coordinates = get_ticker_coordinates()
+	chunks = np.array_split(ticker_coordinates, 5)
 	hash_cache, hashs = get_hash_cache('google')
-	collect_news(ticker_coordinates, hash_cache, hashs)	
+
+	errors = mp.Queue()
+
+	processes = [
+		mp.Process(target=collect_news, args=(chunk, hash_cache, hashs, errors))
+		for chunk in chunks
+	]
+
+	for process in processes:
+		process.start()
+
+	for process in processes:
+		process.join()
+
+	if not errors.empty():
+		error = errors.get()
+		raise Exception(error)
+	
 	save('google', PATH, hash_cache, hashs, send_to_bucket, send_metric)
 
 if __name__ == '__main__':

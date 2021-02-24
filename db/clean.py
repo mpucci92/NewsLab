@@ -98,6 +98,42 @@ def validate(match, hit, miss):
 
 	return match
 
+def clean_google_item(query, item):
+
+	cleaned_item = {
+		'search_query' : query,
+		'_source' : 'google'
+	}
+
+	title = item.get('title')
+	if title:
+		cleaned_item['title'] = title
+
+	link = item.get('link')
+	if link:
+		cleaned_item['link'] = link
+
+	published = item.get('published')
+	if published:
+		cleaned_item['published'] = published
+
+	published_parsed = item.get('published_parsed')
+	if published_parsed:
+		iso = time.strftime('%Y-%m-%dT%H:%M:%S', tuple(published_parsed))
+		cleaned_item['published_parsed'] = iso
+
+	article_source = item.get('source', {})
+	article_source = article_source.get('title')
+	if article_source:
+		cleaned_item['article_source'] = article_source
+
+	source_href = item.get("source", {})
+	source_href = source_href.get("href")
+	if source_href:
+		cleaned_item['source_href'] = source_href
+
+	return cleaned_item
+
 def clean(item):
 
 	ticker_matches = []
@@ -111,6 +147,9 @@ def clean(item):
 
 	###############################################################################################
 	## Cleaning
+
+	if source == 'rss' and item['feed_source'] == 'Google':
+		item = clean_google_item('', item)
 
 	links = item.get('links')
 	if links:
@@ -127,10 +166,16 @@ def clean(item):
 	###############################################################################################
 	## RSS Specific
 
+	print(source)
+
 	if source == "rss":
 
-		article_source = urlparse(item['link']).netloc
-		item['article_source'] = article_source.split(".")[1]
+		link = item['link']
+		if type(link) is dict:
+			link = link['href']
+		item['link'] = link
+
+		item['article_source'] = item['feed_source']
 
 		_authors.append(item.get("author"))
 		for author in item.get("authors", []):
@@ -315,7 +360,7 @@ def clean(item):
 		'language' : language,
 		'link' : item['link'].lower(),
 		'article_source' : item['article_source'],
-		'source' : item['source']
+		'_source' : source
 	}
 
 	if source == 'rss':
@@ -340,7 +385,7 @@ def clean(item):
 	if _authors:
 		new_item['authors'] = [
 			author.lower()
-			for author in list(set(_authors)) + [article_source]
+			for author in list(set(_authors)) + [new_item['article_source']]
 		]
 
 	if contribs:

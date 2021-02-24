@@ -21,12 +21,6 @@ class Feeds(Thread):
 
 		self.sleep = sleep
 		self.logger = logger
-		self._source = (
-			'rss'
-			if 'Google' not in sources
-			else
-			'google'
-		)
 		
 		self.coords = deque([
 			(source.strip(), feed.strip())
@@ -95,7 +89,7 @@ class Feeds(Thread):
 
 			entry['acquisition_datetime'] = datetime.now(tz=timezone.utc).isoformat()[:19]
 			entry['feed_source'] = self.source
-			entry['_source'] = self._source
+			entry['_source'] = 'rss'
 
 			print(self.source)
 			self.entries.append(entry)
