@@ -1,4 +1,4 @@
-from const import get_ticker_coordinates, get_hash_cache, save
+from helpers import get_ticker_coordinates, get_hash_cache, save
 from const import DIR, SDATE, CONFIG, logger
 from datetime import datetime
 from pathlib import Path
@@ -24,6 +24,42 @@ PATH = Path(f"{DIR}/news_data/google/")
 
 ###################################################################################################
 
+def clean_item(query, item):
+
+	cleaned_item = {
+		'search_query' : query,
+		'_source' : 'google'
+	}
+
+	title = item.get('title')
+	if title:
+		cleaned_item['title'] = title
+
+	link = item.get('link')
+	if link:
+		cleaned_item['link'] = link
+
+	published = item.get('published')
+	if published:
+		cleaned_item['published'] = published
+
+	published_parsed = item.get('published_parsed')
+	if published_parsed:
+		iso = time.strftime('%Y-%m-%dT%H:%M:%S', tuple(published_parsed))
+		cleaned_item['published_parsed'] = iso
+
+	article_source = item.get('source', {})
+	article_source = article_source.get('title')
+	if article_source:
+		cleaned_item['article_source'] = article_source
+
+	source_href = item.get("source", {})
+	source_href = source_href.get("href")
+	if source_href:
+		cleaned_item['source_href'] = source_href
+
+	return cleaned_item
+
 def fetch(query, hash_cache, hashs):
 
 	url = URL.format(query = query.replace(' ', '+'))
@@ -32,47 +68,17 @@ def fetch(query, hash_cache, hashs):
 	cleaned_items = []
 	for item in items['entries']:
 
-		cleaned_item = {
-			'search_query' : query,
-			'_source' : 'google'
-		}
+		cleaned_item = clean_item(query, item)
 
-		title = item.get('title')
-		if title:
-			cleaned_item['title'] = title
-
-		link = item.get('link')
-		if link:
-			cleaned_item['link'] = link
-
-		published = item.get('published')
-		if published:
-			cleaned_item['published'] = published
-
-		published_parsed = item.get('published_parsed')
-		if published_parsed:
-			iso = time.strftime('%Y-%m-%dT%H:%M:%S', published_parsed)
-			cleaned_item['published_parsed'] = iso
-
-		article_source = item.get('source', {})
-		article_source = article_source.get('title')
-		if article_source:
-			cleaned_item['article_source'] = article_source
-
-		if article_source not in news_sources:
+		if cleaned_item['article_source'] not in news_sources:
 			continue
-
-		source_href = item.get("source", {})
-		source_href = source_href.get("href")
-		if source_href:
-			cleaned_item['source_href'] = source_href
 
 		_hash = md5(json.dumps(cleaned_item).encode()).hexdigest()
 		if _hash in hashs:
 			continue
 
 		hashs.add(_hash)
-		hash_cache[0].append(_hash)
+		hash_cache[SDATE].append(_hash)
 
 		cleaned_item['acquisition_datetime'] = datetime.now().isoformat()[:19]
 		cleaned_items.append(cleaned_item)
@@ -102,7 +108,7 @@ def main():
 	ticker_coordinates = get_ticker_coordinates()
 	hash_cache, hashs = get_hash_cache('google')
 	collect_news(ticker_coordinates, hash_cache, hashs)	
-	save('google', PATH, hash_cache, send_to_bucket, send_metric)
+	save('google', PATH, hash_cache, hashs, send_to_bucket, send_metric)
 
 if __name__ == '__main__':
 

@@ -1,4 +1,4 @@
-from const import get_ticker_coordinates, get_hash_cache, save
+from helpers import get_ticker_coordinates, get_hash_cache, save
 from const import DIR, SDATE, CONFIG, logger
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
@@ -65,7 +65,7 @@ def fetch(ticker, hash_cache, hashs):
 			continue
 
 		hashs.add(_hash)
-		hash_cache[0].append(_hash)
+		hash_cache[SDATE].append(_hash)
 
 		item['acquisition_datetime'] = datetime.now().isoformat()[:19]
 		items.append(item)
@@ -92,7 +92,7 @@ def main():
 	tickers = tickers.ticker.values.tolist()
 	hash_cache, hashs = get_hash_cache('cnbc')
 	collect_news(tickers, hash_cache, hashs)
-	save('cnbc', PATH, hash_cache, send_to_bucket, send_metric)
+	save('cnbc', PATH, hash_cache, hashs, send_to_bucket, send_metric)
 
 if __name__ == '__main__':
 
