@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import feedparser
 import sys, os
+import pytz
 import json
 import time
 import uuid
@@ -134,8 +135,20 @@ def main():
 	if not errors.empty():
 		error = errors.get()
 		raise Exception(error)
-	
-	save('google', PATH, hash_cache, hashs, send_to_bucket, send_metric)
+
+	now = datetime.now(pytz.timezone("Canada/Eastern"))
+	backups = os.listdir(f"{DIR}/news_data_backup/google")
+
+	if now.hour >= 20 and f"{SDATE}.tar.xz" not in backups:
+
+		logger.info("google job, daily save")
+		save('google', PATH, hash_cache, hashs, send_to_bucket, send_metric)
+
+	else:
+
+		logger.info("google job, sending metrics")
+		news_data = os.listdir(f"{DIR}/news_data")
+		send_metric(CONFIG, f"google_raw_news_count", "int64_value", len(news_data))
 
 if __name__ == '__main__':
 

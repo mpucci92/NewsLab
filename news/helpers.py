@@ -52,7 +52,7 @@ def get_hash_cache(key):
 
             dt = datetime.strptime(date, FMT)
 
-            if (TDAY - dt).days > 7:
+            if (TDAY - dt).days >= 7:
             
                 del hash_cache[date]
                 hash_cache[SDATE] = []
@@ -123,7 +123,6 @@ def save(key, path, hash_cache, hashs, send_to_bucket, send_metric):
     time.sleep(1)
 
     json_file.unlink()
-    xz_file.unlink()
 
     for file in files:
         file.unlink()
