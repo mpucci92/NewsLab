@@ -1,0 +1,6 @@
+Commodities: https://en.wikipedia.org/wiki/List_of_traded_commodities
+Currencies (remove NIO from this list): https://en.wikipedia.org/wiki/List_of_circulating_currencies
+Company Names: http://eoddata.com/
+Word List (Word List B): https://github.com/jeremy-rifkin/Wordlist
+Stop Words (rishad2m8's comment): https://gist.github.com/sebleier/554280
+Two Grams: get_popular_ngrams.py -> from NLTK
