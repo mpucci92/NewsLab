@@ -88,7 +88,8 @@ class Feeds(Thread):
 			self.last_45[self.feed] = self.last_45[self.feed][-self.WINDOW:]
 
 			entry['acquisition_datetime'] = datetime.now(tz=timezone.utc).isoformat()[:19]
-			entry['oscrap_source'] = self.source
+			entry['feed_source'] = self.source
+			entry['_source'] = 'rss'
 
 			print(self.source)
 			self.entries.append(entry)
@@ -97,4 +98,5 @@ class Feeds(Thread):
 
 			with open(f"{DIR}/news_data/{str(uuid.uuid4())}.json", "w") as file:
 				file.write(json.dumps(self.entries))
+
 			self.entries = []

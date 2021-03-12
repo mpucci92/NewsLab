@@ -33,3 +33,6 @@ formatter = logging.Formatter('%(asctime)s - %(message)s')
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)
 logger.addHandler(fh)
+
+###################################################################################################
+
