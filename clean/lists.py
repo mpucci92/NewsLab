@@ -136,6 +136,7 @@ SYNONYMS = [
 ]
 
 SAFE_SUFF_SINGLES = [
+    'amazon',
     'blackberry',
     'bombardier',
     'asana',
@@ -181,7 +182,7 @@ SAFE_MOD_SINGLES = [
     "pretium",
     "rogers",
     "slack",
-    "arbor"
+    "arbor",
 ]
 
 SAFE_TWO_GRAMS = [
@@ -203,6 +204,7 @@ MANUAL_OVERRIDES = [
     'cohen',
     'deere',
     'u and',
+    'esports'
 ]
 
 TARGET_FALSE_PRES = [

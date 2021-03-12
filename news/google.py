@@ -7,6 +7,7 @@ from hashlib import md5
 import pandas as pd
 import numpy as np
 import feedparser
+import traceback
 import sys, os
 import pytz
 import json
@@ -24,6 +25,7 @@ from utils import send_metric, send_to_bucket
 URL = "https://news.google.com/rss/search?q={query}+when:1d&hl=en-CA&gl=CA&ceid=CA:en"
 news_sources = list(pd.read_csv(f"{DIR}/data/news_sources.csv").news_source)
 PATH = Path(f"{DIR}/news_data/google/")
+HASHDIR = Path(f"{DIR}/hashs")
 
 ###################################################################################################
 
@@ -81,7 +83,6 @@ def fetch(query, hash_cache, hashs):
 			continue
 
 		hashs.add(_hash)
-
 		hash_cache[SDATE].append(_hash)
 
 		cleaned_item['acquisition_datetime'] = datetime.now().isoformat()[:19]
@@ -94,7 +95,7 @@ def fetch(query, hash_cache, hashs):
 	with open(PATH / f"{fname}.json", "w") as file:
 		file.write(json.dumps(cleaned_items))
 
-def collect_news(ticker_coordinates, hash_cache, hashs, errors):
+def collect_news(job_id, ticker_coordinates, hash_cache, hashs, errors):
 
 	try:
 
@@ -113,6 +114,9 @@ def collect_news(ticker_coordinates, hash_cache, hashs, errors):
 
 		errors.put(e)
 
+	with open(HASHDIR / f"{job_id}.json", "w") as file:
+		file.write(json.dumps(hash_cache[SDATE]))
+
 def main():
 
 	ticker_coordinates = get_ticker_coordinates()
@@ -122,8 +126,8 @@ def main():
 	errors = mp.Queue()
 
 	processes = [
-		mp.Process(target=collect_news, args=(chunk, hash_cache, hashs, errors))
-		for chunk in chunks
+		mp.Process(target=collect_news, args=(job_id, chunk[:100], hash_cache, hashs, errors))
+		for job_id, chunk in enumerate(chunks)
 	]
 
 	for process in processes:
@@ -135,6 +139,20 @@ def main():
 	if not errors.empty():
 		error = errors.get()
 		raise Exception(error)
+
+	###############################################################################################
+
+	for file in HASHDIR.iterdir():
+
+		if file.name == '.gitignore':
+			continue
+
+		with open(file, "r") as _file:
+			hash_cache[SDATE].extend(json.loads(_file.read()))
+
+	hash_cache[SDATE] = list(set(hash_cache[SDATE]))
+
+	###############################################################################################
 
 	now = datetime.now(pytz.timezone("Canada/Eastern"))
 	backups = os.listdir(f"{DIR}/news_data_backup/google")
@@ -149,6 +167,8 @@ def main():
 		logger.info("google job, sending metrics")
 		news_data = os.listdir(f"{DIR}/news_data")
 		send_metric(CONFIG, f"google_raw_news_count", "int64_value", len(news_data))
+		with open(f"{DIR}/data/google_hash_cache.json", "w") as file:
+			file.write(json.dumps(hash_cache))
 
 if __name__ == '__main__':
 
@@ -161,7 +181,8 @@ if __name__ == '__main__':
 
 	except Exception as e:
 
-		logger.warning(f"google job error, {e}")
+		exc = traceback.format_exc()
+		logger.warning(f"google job error, {e}, {exc}")
 		send_metric(CONFIG, "google_success_indicator", "int64_value", 0)
 
 	logger.info("google job, terminating")

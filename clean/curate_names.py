@@ -186,6 +186,7 @@ def replace_indices(df):
 	new = [
 		['dow', 'DIA', 'NASDAQ', 'suff'],
 		['dow jones industrial average', 'DIA', 'NASDAQ', 'none'],
+		['dow jones', 'DIA', 'NASDAQ', 'none'],
 		['nasdaq composite', 'QQQ', 'NASDAQ', 'none'],
 		['nasdaq', 'QQQ', 'NASDAQ', 'suff']
 	]
@@ -235,6 +236,7 @@ def add_nicknames(df):
 		['google', 'GOOG', 'NASDAQ', 'custom'],
 		['jpm', 'JPM', 'NYSE', 'custom'],
 		['j&j', 'JNJ', 'NYSE', 'custom'],
+		['jnj', 'JNJ', 'NYSE', 'custom'],
 		['walmart', 'WMT', 'NYSE', 'custom'],
 		['wal-mart', 'WMT', 'NYSE', 'custom'],
 		['disney', 'DIS', 'NYSE', 'custom'],

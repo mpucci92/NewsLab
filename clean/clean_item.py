@@ -9,9 +9,7 @@ from pathlib import Path
 from pprint import pprint
 import pandas as pd
 import dateparser
-import requests
 import sys, os
-import json
 import time
 import uuid
 import re
@@ -53,13 +51,6 @@ DATE_FMTS = [
 
 ###################################################################################################
 
-def get_scores(sentences):
-
-	data = {"sentences" : sentences}
-	response = requests.post("http://localhost:9602", headers=HEADERS, json=data)
-	response = json.loads(response.content)
-	return response.values()
-
 def validate(match, hit, miss):
 
 	if match.count(":") == 1:
@@ -88,20 +79,31 @@ def clean_item(item):
 	contribs = []
 	tables = []
 
-	source = item['source']
+	source = item['_source']
+	is_og_rss = source == "rss" and item['feed_source'] != 'Google'
+
+	###############################################################################################
+	## Link Cleaning
+
 	links = item.get('links')
 	if links:
 		item['link'] = links[0]
 
-	is_rss = source == "rss"
+	link = item.get('link')
+	if link:
+		if type(link) is dict:
+			item['link'] = item['link']['href']
+		item['link'] = item['link'].lower()
 
 	###############################################################################################
 	## RSS Specific
 
-	if is_rss:
+	if source == "rss":
 
 		article_source = urlparse(item['link']).netloc
 		item['article_source'] = article_source.split(".")[1]
+
+	if is_og_rss:
 
 		_authors.append(item.get("author"))
 		for author in item.get("authors", []):
@@ -253,7 +255,7 @@ def clean_item(item):
 
 	tickers = re.findall(TICKER_PAT, item['title'])
 	tickers.extend(find_company_names(item['title']))
-	if is_rss:
+	if is_og_rss:
 		tickers.extend(find_company_names(summary))
 
 	tickers.extend([
@@ -301,13 +303,13 @@ def clean_item(item):
 		'oscrap_timestamp' : oscrap_timestamp,
 		'language' : language,
 		'link' : item['link'].lower(),
-		'article_source' : item['article_source'],
-		'source' : item['source']
+		'article_source' : item['article_source'].lower(),
+		'source' : source
 	}
 
-	if is_rss:
+	if is_og_rss and summary:
 		new_item['summary'] = summary.strip()
-		new_item['_summary'] = item.get('summary', '').strip()
+		new_item['_summary'] = item['summary'].strip()
 
 	if ticker_matches:
 		for ticker in ticker_matches:
@@ -327,7 +329,8 @@ def clean_item(item):
 	if _authors:
 		new_item['authors'] = [
 			author.lower()
-			for author in list(set(_authors)) + [article_source]
+			for author in
+			list(set(_authors)) + [item['article_source']]
 		]
 
 	if contribs:
@@ -357,5 +360,7 @@ def clean_item(item):
 		search.extend(tickers)
 
 	new_item['search'] = search
+
+	print(new_item)
 
 	return new_item

@@ -1,4 +1,4 @@
-from const import DIR, logger, date_today
+from const import DIR, logger, SDATE
 from joblib import delayed, Parallel
 from feeds import Feeds
 import pandas as pd
@@ -67,7 +67,7 @@ def parallel_job(job_id, parallel_group):
 
 def main():
 
-	logger.info(f"RSS,Job,Initated,{date_today}")
+	logger.info(f"RSS,Job,Initated,{SDATE}")
 
 	for file in os.listdir(f"{DIR}/pids"):
 		

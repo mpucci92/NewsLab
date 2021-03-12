@@ -7,6 +7,7 @@ import json
 import os
 
 DIR = os.path.realpath(os.path.dirname(__file__))
+RAWDIR = Path(f"{DIR}/raw_data")
 
 RSS_BUCKET = storage.Client().bucket("oscrap_storage")
 RSS_FOLDER = Path("news_data/rss/")

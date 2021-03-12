@@ -4,6 +4,7 @@ from clean_item import clean_item
 from const import DIR, CONFIG
 from hashlib import sha256
 from pathlib import Path
+import requests
 import shutil
 import sys, os
 import json
@@ -28,24 +29,30 @@ NEWS_DIR = Path(f"{DIR}/news_data")
 
 ###################################################################################################
 
-def get_files(dirs):
+def get_scores(sentences):
+
+	data = {"sentences" : sentences}
+	response = requests.post("http://localhost:9602", headers=HEADERS, json=data)
+	response = json.loads(response.content)
+	return response.values()
+
+def get_files():
 	
 	return [
 		shutil.copy(file, NEWS_DIR / file.name)
-		for _dir in dirs
+		for _dir in NEWS_DIRS
 		for file in list(_dir.iterdir())
 	]
 
 def cleaning_loop():
 
 	files = set([
-		DIR / ".gitignore"
-		for DIR in NEWS_DIRS
+		NEWS_DIR / ".gitignore"
 	])
 
 	while True:
 
-		new_files = get_files(NEWS_DIRS)
+		new_files = get_files()
 
 		try:
 			
@@ -67,17 +74,22 @@ def cleaning_loop():
 
 				try:
 					items.extend(json.loads(file.read()))
-					files.add(new_file.name)
+					files.add(new_file)
 				except Exception as e:
 					print(new_file, e)
 
 		new_items = []
-		for item in items:
+		for item in items[:5]:
 
 			if not item.get("title"):
 				continue
 
-			item = clean_item(item)
+			try:
+				item = clean_item(item)
+			except Exception as e:
+				print(item)
+				print(e)
+				raise Exception()
 
 			dummy_item = {
 				"title" : item['title'].lower(),
