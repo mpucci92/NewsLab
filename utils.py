@@ -3,6 +3,8 @@ from google.cloud import monitoring_v3
 from google.cloud import storage
 from mailjet_rest import Client
 from datetime import datetime
+from hashlib import md5
+import tarfile as tar
 import requests
 import base64
 import sys,os
@@ -30,7 +32,7 @@ class DummyLogger():
 	def info(self, str_):
 		print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')} - {str_}")
 
-def send_to_bucket(bucket_prefix, bucket_name, filename, filepath, logger=None):
+def send_to_bucket(bucket_name, bucket_prefix, file, logger=None):
 
 	if not logger:
 		logger = DummyLogger()
@@ -38,23 +40,21 @@ def send_to_bucket(bucket_prefix, bucket_name, filename, filepath, logger=None):
 	max_tries = 5
 	storage_attempts = 0
 
-	fullname = f"{filepath}/{filename}"
-
 	while storage_attempts < max_tries:
 
 		try:
 
 			bucket = STORAGE_CLIENT.bucket(bucket_name)
-			blob = bucket.blob(f"{bucket_prefix}/{filename}")
-			blob.upload_from_filename(fullname, checksum="md5")
+			blob = bucket.blob(f"{bucket_prefix}/{file.name}")
+			blob.upload_from_filename(file, checksum="md5")
 			
-			logger.info(f"Store,Upload,Success,{storage_attempts},,")
+			logger.info(f"Upload to {bucket_name}/{bucket_prefix} successful. {storage_attempts} attempts.")
 
 			break
 
 		except Exception as e:
 
-			logger.warning(f"Store,Upload,Failure,{storage_attempts},{e},")
+			logger.warning(f"Upload to {bucket_name}/{bucket_prefix} failed. {storage_attempts} attempts.")
 			storage_attempts += 1
 
 	if storage_attempts >= max_tries:
@@ -73,7 +73,7 @@ def send_metric(CONFIG, metric_name, metric_type, metric):
 	now = time.time()
 	point.interval.end_time.seconds = int(now)
 	point.interval.end_time.nanos = int(
-	    (now - point.interval.end_time.seconds) * 10**9)
+		(now - point.interval.end_time.seconds) * 10**9)
 
 	project_name = METRIC_CLIENT.project_path(CONFIG['GCP']['PROJECT_ID'])
 	METRIC_CLIENT.create_time_series(project_name, [series])
@@ -100,6 +100,8 @@ def create_gcp_metric(metric_name, value_type):
 	descriptor = METRIC_CLIENT.create_metric_descriptor(project_name, descriptor)
 
 	print('Created {}.'.format(descriptor.name))
+
+###################################################################################################
 
 def encode_text(filename, filepath):
 
@@ -199,6 +201,8 @@ def send_email(CONFIG, subject, body, attachments, logger=None):
 	if email_attempts >= max_tries:
 		raise Exception("Emailing Failure.")
 
+###################################################################################################
+
 def request(url, logger=None):
 
 	if not logger:
@@ -223,21 +227,69 @@ def request(url, logger=None):
 	if tries >= max_tries:
 		raise Exception("Too many requests.")
 
+def save_items(path, hashs, date, delay=0):
+
+	def check_file(file, now):
+		ctime = file.stat().st_ctime
+		delta = (now - datetime.fromtimestamp(ctime))
+		return int(delta.seconds / 60) > delay
+
+	files = list(path.iterdir())
+	files.remove(path / ".gitignore")
+
+	now = datetime.now()
+	files = [
+		file
+		for file in files
+		if check_file(file, now)
+	]
+
+	items = []
+	for file in files:
+		
+		with open(file, "r") as _file:
+
+			for item in json.loads(_file.read()):
+
+				dummy_item = item.copy()
+				dummy_item.pop('acquisition_datetime')
+
+				_hash = md5(json.dumps(dummy_item).encode()).hexdigest()
+				if _hash in hashs:
+					continue
+
+				hashs.add(_hash)
+				items.append(item)
+
+	###############################################################################################
+
+	json_file = path.parent / 'news_data_backup'
+	json_file = json_file / f'{date}.json'
+	xz_file = json_file.with_suffix(".tar.xz")
+
+	with open(json_file, "w") as file:
+		file.write(json.dumps(items))
+
+	with tar.open(xz_file, "x:xz") as tar_file:
+		tar_file.add(json_file, arcname=json_file.name)
+
+	json_file.unlink()
+
+	for file in files:
+		file.unlink()
+
 if __name__ == '__main__':
 
 	# bucket_backup()
 
-	## RSS
-	# create_gcp_metric("rss_raw_news_count", "INT64")
-	# create_gcp_metric("rss_clean_news_count", "INT64")
+	# RSS
+	# create_gcp_metric("rss_raw_count", "INT64")
+	# create_gcp_metric("rss_clean_count", "INT64")
+	# create_gcp_metric("rss_save_success_indicator", "INT64")
 
-	## Google
-	# create_gcp_metric("google_success_indicator", "INT64")
-	# create_gcp_metric("google_raw_news_count", "INT64")
-	# create_gcp_metric("google_clean_news_count", "INT64")
+	# # Google
+	# create_gcp_metric("news_success_indicator", "INT64")
+	# create_gcp_metric("news_raw_count", "INT64")
+	# create_gcp_metric("news_clean_count", "INT64")
 
-	## CNBC
-	# create_gcp_metric("cnbc_success_indicator", "INT64")
-	# create_gcp_metric("cnbc_raw_news_count", "INT64")
-	# create_gcp_metric("cnbc_clean_news_count", "INT64")
 	pass

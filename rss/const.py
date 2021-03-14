@@ -17,7 +17,7 @@ with open(f"{DIR}/../news_config.json", "r") as file:
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-fh = logging.FileHandler(f'{DIR}/rss.log')
+fh = logging.FileHandler(f'{DIR}/log.log')
 formatter = logging.Formatter('%(asctime)s - %(message)s')
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)

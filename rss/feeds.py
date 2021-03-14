@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from collections import deque
 from threading import Thread
 
-from hashlib import sha256
+from hashlib import md5
 from const import DIR
 import feedparser
 import socket
@@ -78,8 +78,8 @@ class Feeds(Thread):
 
 		for entry in entries:
 			
-			entry_str = json.dumps(entry).encode()
-			entry_hash = sha256(entry_str).hexdigest()
+			entry_str = json.dumps(entry, sort_keys = True).encode()
+			entry_hash = md5(entry_str).hexdigest()
 			
 			if entry_hash in self.last_45[self.feed]:
 				break
