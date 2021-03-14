@@ -21,7 +21,7 @@ DATA = Path(f"{DIR}/name_data")
 
 ###################################################################################################
 
-def download_and_merge():
+def download_and_merge_names():
 
 	for file in DATA.iterdir():
 		file.unlink()
@@ -79,10 +79,9 @@ def download_and_merge():
 
 	df = pd.concat(df)
 	df.columns = ['ticker', 'name', 'exchange']
-
-	df = df.sort_values('ticker').reset_index(drop=True)
-	df.to_csv(f"{DIR}/data/company_names.csv", index=False)
+	return df.sort_values('ticker').reset_index(drop=True)
 
 if __name__ == '__main__':
 
-	download_and_merge()
+	df = download_and_merge_names()
+	df.to_csv(f"{DIR}/data/company_names.csv", index=False)

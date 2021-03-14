@@ -4,7 +4,6 @@ import inflect
 
 ###################################################################################################
 
-company_names = pd.read_csv("data/company_names.csv")
 stop_words = set(pd.read_csv("data/stop_words.csv").word.str.lower())
 eng_words = set(pd.read_csv("data/english_words.csv").word.str.lower())
 countries = set(pd.read_csv("data/countries.csv").word.str.lower())
@@ -64,10 +63,13 @@ def replace_special_cases(df):
 	new_names += list(df.name.str.replace("\\.com ", " "))
 	new_names += list(df.name.str.replace("'s ", "s "))
 	new_names += list(df.name.str.replace(" & ", " and "))
+	new_names += list(df.name.str.replace("-", " "))
+	new_names += list(df.name.str.replace("-", ""))
 	
-	tickers = list(df.ticker)*5
-	exchanges = list(df.exchange)*5
-	types = list(df.type)*5
+	n = 7
+	tickers = list(df.ticker)*n
+	exchanges = list(df.exchange)*n
+	types = list(df.type)*n
 	
 	df = pd.DataFrame(list(zip(new_names, tickers, exchanges, types)))
 	df.columns = ['name', 'ticker', 'exchange', 'type']
@@ -270,10 +272,8 @@ def add_nicknames(df):
 	])
 	return df
 
-###################################################################################################
-	
-if __name__ == '__main__':
-	
+def curate_names(company_names):
+
 	company_names['name'] = company_names.name.str.lower()
 	print("Initial", company_names.shape)
 	company_names = pre_filter(company_names)
@@ -326,4 +326,12 @@ if __name__ == '__main__':
 	company_names = company_names.sort_values('ticker')
 	company_names = company_names.drop_duplicates().reset_index(drop=True)
 	print("Drop dupes", company_names.shape)
+	return company_names
+
+###################################################################################################
+	
+if __name__ == '__main__':
+
+	company_names = pd.read_csv("data/company_names.csv")
+	company_names = curate_names(company_names)
 	company_names.to_csv("data/cleaned_company_names.csv", index=False)

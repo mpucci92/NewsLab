@@ -204,7 +204,8 @@ MANUAL_OVERRIDES = [
     'cohen',
     'deere',
     'u and',
-    'esports'
+    'esports',
+    'investment company'
 ]
 
 TARGET_FALSE_PRES = [

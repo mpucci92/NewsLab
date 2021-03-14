@@ -16,25 +16,19 @@ from utils import send_metric
 
 ###################################################################################################
 
-ES_CLIENT = Elasticsearch(CONFIG['ES']['IP'], port=CONFIG['ES']['PORT'], http_comprress=True, timeout=30)
+# ES_CLIENT = Elasticsearch(CONFIG['ES']['IP'], port=CONFIG['ES']['PORT'], http_comprress=True, timeout=30)
+ES_CLIENT = Elasticsearch()
 HEADERS = {"Content-Type" : "application/json"}
 
 NEWS_DIRS = [
 	Path(f"{DIR}/../rss/news_data"),
 	Path(f"{DIR}/../news/news_data/google"),
-	Path(f"{DIR}/../news/news_data/cnbc"),
+	# Path(f"{DIR}/../news/news_data/cnbc"),
 ]
 
 NEWS_DIR = Path(f"{DIR}/news_data")
 
 ###################################################################################################
-
-def get_scores(sentences):
-
-	data = {"sentences" : sentences}
-	response = requests.post("http://localhost:9602", headers=HEADERS, json=data)
-	response = json.loads(response.content)
-	return response.values()
 
 def get_files():
 	
@@ -43,6 +37,13 @@ def get_files():
 		for _dir in NEWS_DIRS
 		for file in list(_dir.iterdir())
 	]
+
+def get_scores(sentences):
+
+	data = {"sentences" : sentences}
+	response = requests.post("http://localhost:9602", headers=HEADERS, json=data)
+	response = json.loads(response.content)
+	return response.values()
 
 def cleaning_loop():
 
@@ -69,9 +70,8 @@ def cleaning_loop():
 				
 		items = []
 		for new_file in set(new_files).difference(files):
-
+			print(new_file)
 			with open(new_file, "r") as file:
-
 				try:
 					items.extend(json.loads(file.read()))
 					files.add(new_file)
@@ -79,7 +79,7 @@ def cleaning_loop():
 					print(new_file, e)
 
 		new_items = []
-		for item in items[:5]:
+		for item in items:
 
 			if not item.get("title"):
 				continue
@@ -87,7 +87,6 @@ def cleaning_loop():
 			try:
 				item = clean_item(item)
 			except Exception as e:
-				print(item)
 				print(e)
 				raise Exception()
 
@@ -123,12 +122,12 @@ def cleaning_loop():
 				item['_source']['sentiment_score'] = score['sentiment_score']
 				item['_source']['abs_sentiment_score'] = abs(score['sentiment_score'])	
 
-			# successes, failures = helpers.bulk(ES_CLIENT,
-			# 								   new_items,
-			# 								   stats_only=True,
-			# 								   raise_on_error=False)
+			successes, failures = helpers.bulk(ES_CLIENT,
+											   new_items,
+											   stats_only=True,
+											   raise_on_error=False)
 			
-			# print(successes, failures)
+			print(successes, failures)
 			with open(f"{DIR}/cleaned_data/{str(uuid.uuid4())}.json", "w") as file:
 				file.write(json.dumps(new_items))
 

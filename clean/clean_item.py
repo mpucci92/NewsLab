@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from langid import classify
 from hashlib import sha256
 from pathlib import Path
-from pprint import pprint
 import pandas as pd
 import dateparser
 import sys, os
@@ -51,6 +50,42 @@ DATE_FMTS = [
 
 ###################################################################################################
 
+def clean_google_item(item):
+
+	cleaned_item = {
+		'search_query' : item['search_query'],
+		'_source' : item['_source']
+	}
+
+	title = item.get('title')
+	if title:
+		cleaned_item['title'] = title
+
+	link = item.get('link')
+	if link:
+		cleaned_item['link'] = link
+
+	published = item.get('published')
+	if published:
+		cleaned_item['published'] = published
+
+	published_parsed = item.get('published_parsed')
+	if published_parsed:
+		iso = time.strftime('%Y-%m-%dT%H:%M:%S', tuple(published_parsed))
+		cleaned_item['published_parsed'] = iso
+
+	article_source = item.get('source', {})
+	article_source = article_source.get('title')
+	if article_source:
+		cleaned_item['article_source'] = article_source
+
+	source_href = item.get("source", {})
+	source_href = source_href.get("href")
+	if source_href:
+		cleaned_item['source_href'] = source_href
+
+	return cleaned_item
+
 def validate(match, hit, miss):
 
 	if match.count(":") == 1:
@@ -80,6 +115,9 @@ def clean_item(item):
 	tables = []
 
 	source = item['_source']
+	if source == 'google':
+		item = clean_google_item(item)
+
 	is_og_rss = source == "rss" and item['feed_source'] != 'Google'
 
 	###############################################################################################
@@ -283,10 +321,10 @@ def clean_item(item):
 		timestamp = datetime.strptime(DEFAULT_TIME, DATE_FMTS[-1])
 		logger.warning(f"time conversion error,{e}")
 
-	oscrap_timestamp = item.get('acquisition_datetime', DEFAULT_TIME)
-	oscrap_timestamp = datetime.strptime(oscrap_timestamp[:19], DATE_FMTS[-1])
+	acquisition_timestamp = item.get('acquisition_datetime', DEFAULT_TIME)
+	acquisition_timestamp = datetime.strptime(acquisition_timestamp[:19], DATE_FMTS[-1])
 
-	oscrap_timestamp = oscrap_timestamp.isoformat()[:19]
+	acquisition_timestamp = acquisition_timestamp.isoformat()[:19]
 	timestamp = timestamp.isoformat()[:19]
 
 	###############################################################################################
@@ -300,7 +338,7 @@ def clean_item(item):
 	new_item = {
 		'title' : item['title'].strip(),
 		'timestamp' : timestamp,
-		'oscrap_timestamp' : oscrap_timestamp,
+		'acquisition_timestamp' : acquisition_timestamp,
 		'language' : language,
 		'link' : item['link'].lower(),
 		'article_source' : item['article_source'].lower(),
@@ -338,10 +376,7 @@ def clean_item(item):
 
 	if tables:
 		new_item['tables'] = tables
-
-	if item.get('credit'):
-		new_item['credit'] = item['credit']
-
+		
 	###############################################################################################
 	## Search field
 
@@ -360,7 +395,5 @@ def clean_item(item):
 		search.extend(tickers)
 
 	new_item['search'] = search
-
-	print(new_item)
 
 	return new_item

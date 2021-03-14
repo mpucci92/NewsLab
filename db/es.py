@@ -52,12 +52,6 @@ ES_MAPPINGS = {
 					"analyzer" : "search_analyzer",
 					"similarity" : "no_length_norm"
 				},
-				"search_query" : {
-					"type" : "keyword"
-				},
-				"source_href" : {
-					"type" : "keyword"
-				},
 				"title": {
 					"type" : "text"
 				},
@@ -76,13 +70,10 @@ ES_MAPPINGS = {
 				"timestamp" : {
 					"type" : "date",
 				},
-				"oscrap_timestamp": {
+				"acquisition_timestamp": {
 					"type" : "date",
 				},
 				"authors" : {
-					"type" : "keyword"
-				},
-				"article_type" : {
 					"type" : "keyword"
 				},
 				"article_source" : {
@@ -104,9 +95,6 @@ ES_MAPPINGS = {
 					"type" : "keyword"
 				},
 				"_tickers" : {
-					"type" : "keyword"
-				},
-				"credit": {
 					"type" : "keyword"
 				},
 				"sentiment": {

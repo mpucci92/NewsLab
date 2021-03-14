@@ -1,44 +1,85 @@
 from const import RSS_FOLDER, CNBC_FOLDER, GOOGLE_FOLDER
-from const import RSS_BUCKET, BUCKET, SUBSET, RAWDIR
+from const import RSS_BUCKET, BUCKET, RAWDIR, UZDIR, ZDIR
+from filetype import guess
+import tarfile as tar
 
-def init_dirs():
+def init_dirs(DIR):
 
-	if not RAWDIR.is_dir():
-		RAWDIR.mkdir()
+	if not DIR.is_dir():
+		DIR.mkdir()
 
-	_dir = (RAWDIR / "cnbc")
+	_dir = (DIR / "cnbc")
 	if not _dir.is_dir():
 		_dir.mkdir()
 
-	_dir = (RAWDIR / "google")
+	_dir = (DIR / "google")
 	if not _dir.is_dir():
 		_dir.mkdir()
 
-	_dir = (RAWDIR / "rss")
+	_dir = (DIR / "rss")
 	if not _dir.is_dir():
 		_dir.mkdir()
 
 if __name__ == '__main__':
 
-	init_dirs()
+	init_dirs(RAWDIR)
+	init_dirs(UZDIR)
+	init_dirs(ZDIR)
 
-	for i, blob in enumerate(BUCKET.list_blobs()):
+	# ## RSS
+	# for blob in RSS_BUCKET.list_blobs():
 
-		if 'twitter' in blob.name.lower():
-			continue
+	# 	if 'rss' not in blob.name or 'cleaned' in blob.name:
+	# 		continue
 
-		parent, name = blob.name.split("/")
-		if not name:
-			continue
+	# 	parent, name = blob.name.split("/")
+	# 	file = RAWDIR / "rss" / name
 
-		if parent == "CNBCNews":
+	# 	if not file.exists():
 
-			print("Downloading CNBC:", name)
-			file = RAWDIR / "cnbc" / name
-			blob.download_to_filename(file)
+	# 		print("Downloading rss:", blob.name)
+	# 		blob.download_to_filename(file)
 
-		elif parent == "GoogleNews":
+	# 		with tar.open(file, "r:xz") as tar_file:
+	# 			tar_file.extractall(UZDIR / "rss")
 
-			print("Downloading Google:", name)
-			file = RAWDIR / "google" / name
-			blob.download_to_filename(file)
+	# for blob in BUCKET.list_blobs():
+
+	# 	if 'twitter' in blob.name.lower():
+	# 		continue
+
+	# 	parent, name = blob.name.split("/")
+	# 	if not name:
+	# 		continue
+
+	# 	# if parent == "CNBCNews":
+
+	# 	# 	file = RAWDIR / "cnbc" / name
+
+	# 	# 	if not file.exists():
+
+	# 	# 		print("Downloading CNBC:", name)
+	# 	# 		blob.download_to_filename(file)
+
+	# 	# 		ftype = guess(str(file))
+	# 	# 		if ftype:
+	# 	# 			with tar.open(file, "r:gz") as tar_file:
+	# 	# 				tar_file.extractall(UZDIR / "cnbc")
+	# 	# 		else:
+	# 	# 			print("FAULT ON", file)
+
+	# 	if parent == "GoogleNews":
+
+	# 		file = RAWDIR / "google" / name
+	# 		if not file.exists():
+
+	# 			print("Downloading Google:", name)
+	# 			blob.download_to_filename(file)
+
+	# 			ftype = guess(str(file))
+	# 			if ftype:
+	# 				print(ftype)
+	# 				with tar.open(file, "r:gz") as tar_file:
+	# 					tar_file.extractall(UZDIR / "google")
+	# 			else:
+	# 				print("FAULT ON", file)

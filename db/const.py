@@ -8,6 +8,8 @@ import os
 
 DIR = os.path.realpath(os.path.dirname(__file__))
 RAWDIR = Path(f"{DIR}/raw_data")
+UZDIR = Path(f"{DIR}/uz_data")
+ZDIR = Path(f"{DIR}/z_data")
 
 RSS_BUCKET = storage.Client().bucket("oscrap_storage")
 RSS_FOLDER = Path("news_data/rss/")

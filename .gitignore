@@ -5,3 +5,5 @@ news_config.json
 *log.log
 sentiment_model/
 *hash_cache.json
+clean/data/match.csv
+clean/matches.log
