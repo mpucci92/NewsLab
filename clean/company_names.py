@@ -45,7 +45,11 @@ if __name__ == '__main__':
 			"\nRemoved Curated Names",
 			removed_curnames.to_html(index=False),
 		])
-		send_email(CONFIG, "Company Name Summary", body, [], logger)
+
+		n = new_comnames.shape[0] + removed_comnames.shape[0]
+		n += new_curnames.shape[0] + removed_curnames.shape[0]
+		if n > 0:
+			send_email(CONFIG, "Company Name Summary", body, [], logger)
 
 		logger.info("company name downloader & curator succesful")
 		send_metric(CONFIG, metric, "int64_value", 1)
