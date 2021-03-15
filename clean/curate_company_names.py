@@ -323,5 +323,5 @@ def curate_company_names(company_names):
 if __name__ == '__main__':
 
 	company_names = pd.read_csv(f"{DIR}/data/company_names.csv")
-	company_names = curate_names(company_names)
+	company_names = curate_company_names(company_names)
 	company_names.to_csv(f"{DIR}/data/curated_company_names.csv", index=False)

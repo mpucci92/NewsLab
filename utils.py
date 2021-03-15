@@ -242,7 +242,10 @@ def save_items(path, hashs, date):
 
 				n_items += 1
 
-				dummy_item = item.get('_source', item)
+				dummy_item = item.copy()
+				if '_index' in dummy_item:
+					dummy_item = dummy_item['_source']
+
 				dummy_item.pop('acquisition_datetime')
 
 				_hash = md5(json.dumps(dummy_item).encode()).hexdigest()
@@ -277,6 +280,7 @@ if __name__ == '__main__':
 
 	# RSS
 	# create_gcp_metric("rss_count", "INT64")
+	# create_gcp_metric("rss_counter", "INT64")
 	# create_gcp_metric("unique_rss_count", "INT64")
 	# create_gcp_metric("rss_save_success_indicator", "INT64")
 

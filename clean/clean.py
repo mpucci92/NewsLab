@@ -68,19 +68,6 @@ def cleaning_loop():
 			logger.info("reloading the company names")
 
 		n_clean = n_clean_new
-
-		try:
-			
-			send_metric(
-				CONFIG,
-				"rss_daily_item_counter",
-				"int64_value",
-				len(new_files) - 1
-			)
-
-		except Exception as e:
-
-			logger.warning(e)
 				
 		items = []
 		for new_file in new_files:
@@ -141,6 +128,21 @@ def cleaning_loop():
 				file.write(json.dumps(new_items))
 
 			new_items = []
+
+		###########################################################################################
+
+		try:
+			
+			send_metric(
+				CONFIG,
+				"rss_counter",
+				"int64_value",
+				len(list(NEWS_DIRS[0].iterdir())) - 1
+			)
+
+		except Exception as e:
+
+			logger.warning(e)
 
 		time.sleep(3)
 

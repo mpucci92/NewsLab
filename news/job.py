@@ -134,7 +134,7 @@ def main():
 	errors = mp.Queue()
 
 	processes = [
-		mp.Process(target=collect_news, args=(job_id, chunk[:5], hash_cache, hashs, errors))
+		mp.Process(target=collect_news, args=(job_id, chunk, hash_cache, hashs, errors))
 		for job_id, chunk in enumerate(chunks)
 	]
 
@@ -175,11 +175,26 @@ def main():
 
 	now = datetime.now(pytz.timezone("Canada/Eastern"))
 	backups = os.listdir(f"{DIR}/news_data_backup")
+	xz_file = Path(f"{DIR}/news_data_backup/{SDATE}.tar.xz")
 	
-	if now.hour >= 20 and f"{SDATE}.tar.xz" not in backups:
+	if now.hour >= 20 and not xz_file.exists():
 
 		logger.info("news job, daily save")
 		n_items, n_unique = save_items(PATH, hashs, SDATE)
+
+		send_to_bucket(
+			CONFIG['GCP']['RAW_BUCKET'],
+			'news',
+			xz_file,
+			logger=logger
+		)
+
+		send_to_bucket(
+			CONFIG['GCP']['RAW_VAULT'],
+			'news',
+			xz_file,
+			logger=logger
+		)
 
 	logger.info("sending metrics")
 	send_metric(CONFIG, "news_count", "int64_value", n_items)

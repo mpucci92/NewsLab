@@ -1,9 +1,9 @@
 from download_company_names import download_company_names
 from curate_company_names import curate_company_names
 from const import CONFIG, DIR, logger
+from traceback import format_exc
 from pathlib import Path
 import pandas as pd
-import traceback
 import sys, os
 import time
 
@@ -56,8 +56,7 @@ if __name__ == '__main__':
 
 	except Exception as e:
 
-		exc = traceback.format_exc()
-		logger.warning(f"company name downloader & curator failed, {e}, {exc}")
+		logger.warning(f"company name downloader & curator failed, {e}, {format_exc()}")
 		send_metric(CONFIG, metric, "int64_value", 0)
 
 	logger.info("company name downloader & curator terminated")

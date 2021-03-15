@@ -1,0 +1,9 @@
+
+## Clean
+0 14 * * * . $HOME/.profile ; $HOME/anaconda3/bin/python $HOME/NewsLab/clean/company_names.py
+
+## RSS
+15 0 * * * . $HOME/.profile ; $HOME/anaconda3/bin/python $HOME/NewsLab/rss/save.py
+
+## News
+*/45 * * * . $HOME/.profile ; $HOME/anaconda3/bin/python $HOME/NewsLab/rss/save.py

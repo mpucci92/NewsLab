@@ -1,5 +1,6 @@
 from const import DIR, logger, SDATE
 from joblib import delayed, Parallel
+from traceback import format_exc
 from feeds import Feeds
 import pandas as pd
 import sys, os
@@ -97,4 +98,4 @@ if __name__ == '__main__':
 	try:
 		main()
 	except Exception as e:
-		logger.warning(e)
+		logger.warning(f"RSS process failed. {e}, {format_exc()}")
