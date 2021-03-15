@@ -67,10 +67,10 @@ ES_MAPPINGS = {
 				"link" : {
 					"type" : "keyword"
 				},
-				"timestamp" : {
+				"published_datetime" : {
 					"type" : "date",
 				},
-				"acquisition_timestamp": {
+				"acquisition_datetime": {
 					"type" : "date",
 				},
 				"authors" : {

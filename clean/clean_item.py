@@ -307,25 +307,25 @@ def clean_item(item):
 	###############################################################################################
 	## Time Stuff
 
-	timestamp = item.get('published', item.get('updated', DEFAULT_TIME))
+	published_datetime = item.get('published', item.get('updated', DEFAULT_TIME))
 	try:
-		timestamp = dateparser.parse(timestamp, DATE_FMTS)
+		published_datetime = dateparser.parse(published_datetime, DATE_FMTS)
 		tz = (
 			timedelta(seconds=0) 
-			if not timestamp.utcoffset()
-			else timestamp.utcoffset()
+			if not published_datetime.utcoffset()
+			else published_datetime.utcoffset()
 		)
-		timestamp += tz
-		timestamp = timestamp.replace(tzinfo=None)
+		published_datetime += tz
+		published_datetime = published_datetime.replace(tzinfo=None)
 	except Exception as e:
-		timestamp = datetime.strptime(DEFAULT_TIME, DATE_FMTS[-1])
+		published_datetime = datetime.strptime(DEFAULT_TIME, DATE_FMTS[-1])
 		logger.warning(f"time conversion error,{e}")
 
-	acquisition_timestamp = item.get('acquisition_datetime', DEFAULT_TIME)
-	acquisition_timestamp = datetime.strptime(acquisition_timestamp[:19], DATE_FMTS[-1])
+	acquisition_datetime = item.get('acquisition_datetime', DEFAULT_TIME)
+	acquisition_datetime = datetime.strptime(acquisition_datetime[:19], DATE_FMTS[-1])
 
-	acquisition_timestamp = acquisition_timestamp.isoformat()[:19]
-	timestamp = timestamp.isoformat()[:19]
+	acquisition_datetime = acquisition_datetime.isoformat()[:19]
+	published_datetime = published_datetime.isoformat()[:19]
 
 	###############################################################################################
 	## Language
@@ -337,8 +337,8 @@ def clean_item(item):
 
 	new_item = {
 		'title' : item['title'].strip(),
-		'timestamp' : timestamp,
-		'acquisition_timestamp' : acquisition_timestamp,
+		'published_datetime' : published_datetime,
+		'acquisition_datetime' : acquisition_datetime,
 		'language' : language,
 		'link' : item['link'].lower(),
 		'article_source' : item['article_source'].lower(),

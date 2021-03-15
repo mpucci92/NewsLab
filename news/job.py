@@ -21,41 +21,13 @@ from utils import send_metric, send_to_bucket, save_items
 ###################################################################################################
 
 URL = "https://news.google.com/rss/search?q={query}+when:1d&hl=en-CA&gl=CA&ceid=CA:en"
-news_sources = list(pd.read_csv(f"{DIR}/data/news_sources.csv").news_source)
 PATH = Path(f"{DIR}/news_data")
 HASHDIR = Path(f"{DIR}/hashs")
 FMT = "%Y-%m-%d"
 
+news_sources = list(pd.read_csv(f"{DIR}/data/news_sources.csv").news_source)
+
 ###################################################################################################
-
-def get_ticker_coordinates():
-
-    file = f"{DIR}/data/ticker_coordinates.csv"
-
-    try:
-
-        df = pd.read_sql("""
-            SELECT
-                ticker,
-                name
-            FROM
-                instruments
-            ORDER BY
-                market_cap
-                DESC
-        """, ENGINE)
-        
-        old_df = pd.read_csv(file)
-        df = pd.concat([old_df, df]).drop_duplicates()
-
-        df.to_csv(file, index=False)
-
-    except Exception as e:
-
-        logger.warning(f"ticker coordinate error, {e}")
-        df = pd.read_csv(file)
-
-    return df
 
 def get_hash_cache():
 
@@ -129,12 +101,12 @@ def fetch(query, hash_cache, hashs):
 	with open(PATH / f"{fname}.json", "w") as file:
 		file.write(json.dumps(items))
 
-def collect_news(job_id, ticker_coordinates, hash_cache, hashs, errors):
+def collect_news(job_id, company_names, hash_cache, hashs, errors):
 
 	try:
 
-		N = len(ticker_coordinates)
-		for i, data in enumerate(ticker_coordinates.values):
+		N = len(company_names)
+		for i, data in enumerate(company_names.values):
 
 			queries = ' '.join(data)
 			progress = round(i / N * 100, 2)
@@ -153,8 +125,10 @@ def collect_news(job_id, ticker_coordinates, hash_cache, hashs, errors):
 
 def main():
 
-	ticker_coordinates = get_ticker_coordinates()
-	chunks = np.array_split(ticker_coordinates, 5)
+	company_names = pd.read_csv(f"{DIR}/../clean/data/company_names.csv")
+	company_names = company_names[['ticker', 'name']]
+
+	chunks = np.array_split(company_names, 5)
 	hash_cache, hashs = get_hash_cache()
 
 	errors = mp.Queue()
@@ -184,7 +158,10 @@ def main():
 		with open(file, "r") as _file:
 			hash_cache[SDATE].extend(json.loads(_file.read()))
 
+	n_items = len(hash_cache[SDATE])
 	hash_cache[SDATE] = list(set(hash_cache[SDATE]))
+	n_unique = len(hash_cache[SDATE])
+
 	hashs = set([
 		_hash
 		for hashlist in hash_cache.values()
@@ -203,8 +180,10 @@ def main():
 
 		logger.info("news job, daily save")
 		n_items, n_unique = save_items(PATH, hashs, SDATE)
-		send_metric(CONFIG, f"news_count", "int64_value", n_items)
-		send_metric(CONFIG, f"unique_news_count", "int64_value", n_unique)
+
+	logger.info("sending metrics")
+	send_metric(CONFIG, "news_count", "int64_value", n_items)
+	send_metric(CONFIG, "unique_news_count", "int64_value", n_unique)
 
 if __name__ == '__main__':
 

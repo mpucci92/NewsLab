@@ -144,7 +144,7 @@ def replace_all_synonyms(df):
 	
 	while True:
 		new_df = replace_synonyms(df)
-		print(len(df), len(new_df))
+		logger.info(f"Synonym Replacement. Old:{len(df)} New:{len(new_df)}")
 		if len(new_df) == len(df):
 			break
 		df = new_df.copy()

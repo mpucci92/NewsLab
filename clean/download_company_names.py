@@ -121,21 +121,5 @@ def download_company_names():
 
 if __name__ == '__main__':
 
-	logger.info("company name downloader initialized")
-	metric = "company_name_download_success_indicator"
-
-	try:
-
-		df = download_company_names()
-		df.to_csv(f"{DIR}/data/company_names.csv", index=False)
-
-		logger.info("company name downloader succesful")
-		send_metric(CONFIG, metric, "int64_value", 1)
-
-	except Exception as e:
-
-		exc = traceback.format_exc()
-		logger.warning(f"company name downloader failed, {e}, {exc}")
-		send_metric(CONFIG, metric, "int64_value", 0)
-
-	logger.info("company name downloader terminated")
+	df = download_company_names()
+	df.to_csv(f"{DIR}/data/company_names.csv", index=False)

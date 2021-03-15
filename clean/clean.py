@@ -1,7 +1,7 @@
 from elasticsearch.helpers.errors import BulkIndexError
 from elasticsearch import Elasticsearch, helpers
+from const import DIR, CONFIG, logger
 from clean_item import clean_item
-from const import DIR, CONFIG
 from importlib import reload
 from hashlib import sha256
 from pathlib import Path
@@ -27,15 +27,22 @@ NEWS_DIRS = [
 ]
 
 NEWS_DIR = Path(f"{DIR}/news_data")
+CLEAN_DIR = Path(f"{DIR}/clean_data")
 
 ###################################################################################################
 
-def get_files():
+def get_files(files):
 	
 	return [
 		shutil.copy(file, NEWS_DIR / file.name)
 		for _dir in NEWS_DIRS
 		for file in list(_dir.iterdir())
+		if
+		(
+			(NEWS_DIR / file.name) not in files
+			and
+			file.name != '.gitignore'
+		) 
 	]
 
 def get_scores(sentences):
@@ -45,29 +52,22 @@ def get_scores(sentences):
 	response = json.loads(response.content)
 	return response.values()
 
-def init():
-
-	files = {NEWS_DIR / ".gitignore"}
-
-	company_names = pd.read_csv(f"{DIR}/data/cleaned_company_names.csv")
-	company_names_dict = company_names.groupby('name')['ticker'].apply(list).to_dict()
-
-	exact_matches = company_names[company_names.type == 'none']
-	exact_matches_dict = exact_matches.groupby('name')['ticker'].apply(list).to_dict()
-
-	return files, company_names_dict, exact_matches_dict
-
 def cleaning_loop():
 
 	files = {NEWS_DIR / ".gitignore"}
+	n_clean = len(list(CLEAN_DIR.iterdir()))
 
 	while True:
 
-		new_files = get_files()
+		new_files = get_files(files)
+		n_clean_new = len(list(CLEAN_DIR.iterdir()))
 
-		if len(new_files) < len(files):
+		if n_clean_new < n_clean:
 			files = {NEWS_DIR / ".gitignore"}
 			reload(sys.modules['find_company_names'])
+			logger.info("reloading the company names")
+
+		n_clean = n_clean_new
 
 		try:
 			
@@ -80,16 +80,16 @@ def cleaning_loop():
 
 		except Exception as e:
 
-			print(e)
+			logger.warning(e)
 				
 		items = []
-		for new_file in set(new_files).difference(files):
+		for new_file in new_files:
 			with open(new_file, "r") as file:
 				try:
 					items.extend(json.loads(file.read()))
 					files.add(new_file)
 				except Exception as e:
-					print(new_file, e)
+					logger.warning(f"File read error. {e}")
 
 		new_items = []
 		for item in items:
@@ -97,11 +97,7 @@ def cleaning_loop():
 			if not item.get("title"):
 				continue
 
-			try:
-				item = clean_item(item, company_names)
-			except Exception as e:
-				print(e)
-				raise Exception()
+			item = clean_item(item)
 
 			dummy_item = {
 				"title" : item['title'].lower(),
@@ -141,12 +137,12 @@ def cleaning_loop():
 											   raise_on_error=False)
 			
 			print(successes, failures)
-			with open(f"{DIR}/cleaned_data/{str(uuid.uuid4())}.json", "w") as file:
+			with open(CLEAN_DIR / f"{str(uuid.uuid4())}.json", "w") as file:
 				file.write(json.dumps(new_items))
 
 			new_items = []
 
-		time.sleep(5)
+		time.sleep(3)
 
 if __name__ == '__main__':
 

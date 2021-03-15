@@ -242,7 +242,7 @@ def save_items(path, hashs, date):
 
 				n_items += 1
 
-				dummy_item = item.copy()
+				dummy_item = item.get('_source', item)
 				dummy_item.pop('acquisition_datetime')
 
 				_hash = md5(json.dumps(dummy_item).encode()).hexdigest()

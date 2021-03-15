@@ -11,7 +11,7 @@ from utils import send_to_bucket, send_metric, save_items
 def check_file(file, now):
 	ctime = file.stat().st_ctime
 	delta = (now - datetime.fromtimestamp(ctime))
-	return int(delta.seconds / 60) > delay
+	return int(delta.seconds / 60) > 1
 
 if __name__ == '__main__':
 
@@ -23,8 +23,19 @@ if __name__ == '__main__':
 		filedate = datetime.now() - timedelta(days = 1)
 		filedate = filedate.strftime('%Y-%m-%d')
 
-		path = Path(f"{DIR}/clean_news_data")
-		xz_file = Path(f"{DIR}/clean_news_data_backup/{filedate}.tar.xz")
+		path = Path(f"{DIR}/clean_data")
+		xz_file = Path(f"{DIR}/clean_data_backup/{filedate}.tar.xz")
+
+		raw_path = Path(f"{DIR}/news_data")
+		files = list(raw_path.iterdir())
+		files.remove(raw_path / ".gitignore")
+
+		now = datetime.now()
+		files = [
+			file
+			for file in files
+			if check_file(file, now)
+		]
 
 		n_items, n_unique = save_items(path, set(), filedate)
 		send_metric(CONFIG, "clean_count", "int64_value", n_items)
