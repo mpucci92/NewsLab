@@ -227,29 +227,20 @@ def request(url, logger=None):
 	if tries >= max_tries:
 		raise Exception("Too many requests.")
 
-def save_items(path, hashs, date, delay=0):
-
-	def check_file(file, now):
-		ctime = file.stat().st_ctime
-		delta = (now - datetime.fromtimestamp(ctime))
-		return int(delta.seconds / 60) > delay
+def save_items(path, hashs, date):
 
 	files = list(path.iterdir())
 	files.remove(path / ".gitignore")
 
-	now = datetime.now()
-	files = [
-		file
-		for file in files
-		if check_file(file, now)
-	]
-
 	items = []
+	n_items = 0
 	for file in files:
 		
 		with open(file, "r") as _file:
 
 			for item in json.loads(_file.read()):
+
+				n_items += 1
 
 				dummy_item = item.copy()
 				dummy_item.pop('acquisition_datetime')
@@ -263,7 +254,7 @@ def save_items(path, hashs, date, delay=0):
 
 	###############################################################################################
 
-	json_file = path.parent / 'news_data_backup'
+	json_file = path.parent / f'{path.name}_backup'
 	json_file = json_file / f'{date}.json'
 	xz_file = json_file.with_suffix(".tar.xz")
 
@@ -278,18 +269,28 @@ def save_items(path, hashs, date, delay=0):
 	for file in files:
 		file.unlink()
 
+	return n_items, len(items)
+
 if __name__ == '__main__':
 
 	# bucket_backup()
 
 	# RSS
-	# create_gcp_metric("rss_raw_count", "INT64")
-	# create_gcp_metric("rss_clean_count", "INT64")
+	# create_gcp_metric("rss_count", "INT64")
+	# create_gcp_metric("unique_rss_count", "INT64")
 	# create_gcp_metric("rss_save_success_indicator", "INT64")
 
-	# # Google
+	# Clean
+	# create_gcp_metric("clean_count", "INT64")
+	# create_gcp_metric("unique_clean_count", "INT64")
+	# create_gcp_metric("clean_save_success_indicator", "INT64")
+
+	# News
+	# create_gcp_metric("news_count", "INT64")
+	# create_gcp_metric("unique_news_count", "INT64")
 	# create_gcp_metric("news_success_indicator", "INT64")
-	# create_gcp_metric("news_raw_count", "INT64")
-	# create_gcp_metric("news_clean_count", "INT64")
+
+	# General
+	# create_gcp_metric("company_names_success_indicator", "INT64")
 
 	pass

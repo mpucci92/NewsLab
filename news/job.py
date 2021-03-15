@@ -191,12 +191,6 @@ def main():
 		for _hash in hashlist
 	])
 
-	###############################################################################################
-
-	logger.info("news job, sending metrics")
-	news_data = list(PATH.iterdir())
-	send_metric(CONFIG, f"news_raw_count", "int64_value", len(news_data))
-
 	with open(f"{DIR}/data/hash_cache.json", "w") as file:
 		file.write(json.dumps(hash_cache))
 
@@ -208,7 +202,9 @@ def main():
 	if now.hour >= 20 and f"{SDATE}.tar.xz" not in backups:
 
 		logger.info("news job, daily save")
-		save_items(PATH, hashs, SDATE, 1)
+		n_items, n_unique = save_items(PATH, hashs, SDATE)
+		send_metric(CONFIG, f"news_count", "int64_value", n_items)
+		send_metric(CONFIG, f"unique_news_count", "int64_value", n_unique)
 
 if __name__ == '__main__':
 

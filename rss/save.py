@@ -22,9 +22,11 @@ if __name__ == '__main__':
 		xz_file = Path(f"{DIR}/news_data_backup/{filedate}.tar.xz")
 
 		n_items = len(list(path.iterdir()))
-		send_metric(CONFIG, "rss_raw_count", "int64_value", n_items - 1)
+		send_metric(CONFIG, "rss_count", "int64_value", n_items - 1)
 
-		save_items(path, set(), filedate)
+		n_unique = save_items(path, set(), filedate)
+		send_metric(CONFIG, "unique_rss_count", "int64_value", n_items)
+
 		send_to_bucket(
 			CONFIG['GCP']['RAW_BUCKET'],
 			'rss',

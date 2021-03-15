@@ -1,39 +1,17 @@
+from const import DIR, logger
 from lists import *
 import pandas as pd
 import inflect
 
 ###################################################################################################
 
-stop_words = set(pd.read_csv("data/stop_words.csv").word.str.lower())
-eng_words = set(pd.read_csv("data/english_words.csv").word.str.lower())
-countries = set(pd.read_csv("data/countries.csv").word.str.lower())
-currencies = set(pd.read_csv("data/currencies.csv").word.str.lower())
-two_grams = set(pd.read_csv("data/two_grams.csv").gram.str.lower())
-commodities = set(pd.read_csv("data/commodities.csv").commodity.str.lower())
+stop_words = set(pd.read_csv(f"{DIR}/data/stop_words.csv").word.str.lower())
+eng_words = set(pd.read_csv(f"{DIR}/data/english_words.csv").word.str.lower())
+countries = set(pd.read_csv(f"{DIR}/data/countries.csv").word.str.lower())
+currencies = set(pd.read_csv(f"{DIR}/data/currencies.csv").word.str.lower())
+two_grams = set(pd.read_csv(f"{DIR}/data/two_grams.csv").gram.str.lower())
+commodities = set(pd.read_csv(f"{DIR}/data/commodities.csv").commodity.str.lower())
 inflect_engine = inflect.engine()
-
-###################################################################################################
-
-def pre_filter(df):
-	
-	combo = df.name + " " + df.exchange
-	vcs = combo.value_counts()    
-	df = df[combo.isin(vcs[vcs == 1].index)]
-	df = df[df.ticker.str.count("\\.") <= 1]
-
-	## Remove warants and units from NASDAQ tickers
-	ndaq = df[df.exchange == 'NASDAQ']
-	ndaq = ndaq[ndaq.ticker.str.len() > 4]
-	df = df[~df.index.isin(ndaq.index)]
-
-	## Remove warrants and units from other tickers
-	## Keep class A and B shares only
-	ticker_mods = df[df.ticker.str.count("\\.") == 1]
-	mod = ticker_mods.ticker.str.split("\\.").str[-1]
-	ticker_mods = ticker_mods[~mod.isin(["A", "B"])]
-	df = df[~df.index.isin(ticker_mods.index)]
-
-	return df
 
 ###################################################################################################
 
@@ -272,66 +250,78 @@ def add_nicknames(df):
 	])
 	return df
 
-def curate_names(company_names):
+def curate_company_names(company_names):
 
 	company_names['name'] = company_names.name.str.lower()
-	print("Initial", company_names.shape)
-	company_names = pre_filter(company_names)
+	logger.info(f"Initial {company_names.shape}")
 
 	## Suffix Section
-	print("Pre Filter", company_names.shape)
 	company_names = remove_suffix(company_names)
-	print("Remove Suffix", company_names.shape)
+	logger.info(f"Remove Suffix {company_names.shape}")
+
 	company_names = replace_special_cases(company_names)
-	print("Special Cases", company_names.shape)
+	logger.info(f"Special Cases {company_names.shape}")
+
 	company_names = remove_single_stop_and_english_words(company_names)
+	logger.info(f"Single stop and english {company_names.shape}")
 
 	## Modifier Section
-	print("Single stop and english", company_names.shape)
+
 	company_names = remove_modifiers(company_names)
-	print("Modifiers", company_names.shape)
+	logger.info(f"Modifiers {company_names.shape}")
+
 	company_names = remove_modifier_stop_and_english_words(company_names)
-	print("Modifier stop and english", company_names.shape)
+	logger.info(f"Modifier stop and english {company_names.shape}")
+
 	company_names = remove_modifier_duplicates(company_names)
-	print("Modifier Duplicates", company_names.shape)
+	logger.info(f"Modifier Duplicates {company_names.shape}")
 
 	## Final cleaning
 	exchanges = ["AMEX", "NASDAQ", "NYSE", "TSX", "LSE"]
 	company_names = company_names[company_names.exchange.isin(exchanges)]
-	print("Exchange Filter", company_names.shape)
+	logger.info(f"Exchange Filter {company_names.shape}")
+
 	company_names = replace_all_synonyms(company_names)
-	print("Replace Synonyms", company_names.shape)
+	logger.info(f"Replace Synonyms {company_names.shape}")
+
 	company_names = replace_indices(company_names)
-	print("Replace Indices", company_names.shape)
+	logger.info(f"Replace Indices {company_names.shape}")
+
 	company_names = remove_all_number_names(company_names)
-	print("Remove Numbered Names", company_names.shape)
+	logger.info(f"Remove Numbered Names {company_names.shape}")
+
 	company_names = remove_short_names(company_names)
-	print("Remove Short Names", company_names.shape)
+	logger.info(f"Remove Short Names {company_names.shape}")
+
 	company_names = company_names[~company_names.name.isin(MANUAL_OVERRIDES)]
-	print("Remove Manual Overrides", company_names.shape)
+	logger.info(f"Remove Manual Overrides {company_names.shape}")
+
 	company_names = remove_countries_and_currencies(company_names)
-	print("Remove Countries and Currencies", company_names.shape)
+	logger.info(f"Remove Countries and Currencies {company_names.shape}")
+
 	company_names = remove_english_two_grams(company_names)
-	print("Remove English Two Grams", company_names.shape)
+	logger.info(f"Remove English Two Grams {company_names.shape}")
+
 	company_names = remove_commodities(company_names)
-	print("Remove Commodities", company_names.shape)
+	logger.info(f"Remove Commodities {company_names.shape}")
 
 	## Super special case of 'Target'. Add nicknames
 	company_names = company_names[company_names.name != 'target']
-	print("Remove Target", company_names.shape)
+	logger.info(f"Remove Target {company_names.shape}")
+
 	company_names = add_nicknames(company_names)
-	print("Added Nicknames", company_names.shape)
+	logger.info(f"Added Nicknames {company_names.shape}")
 
 	## Sort and Save
 	company_names = company_names.sort_values('ticker')
 	company_names = company_names.drop_duplicates().reset_index(drop=True)
-	print("Drop dupes", company_names.shape)
+	logger.info(f"Drop dupes {company_names.shape}")
 	return company_names
 
 ###################################################################################################
 	
 if __name__ == '__main__':
 
-	company_names = pd.read_csv("data/company_names.csv")
+	company_names = pd.read_csv(f"{DIR}/data/company_names.csv")
 	company_names = curate_names(company_names)
-	company_names.to_csv("data/cleaned_company_names.csv", index=False)
+	company_names.to_csv(f"{DIR}/data/curated_company_names.csv", index=False)

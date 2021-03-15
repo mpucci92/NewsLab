@@ -6,7 +6,7 @@ import json
 
 ###################################################################################################
 
-company_names = pd.read_csv("data/cleaned_company_names.csv")
+company_names = pd.read_csv("data/curated_company_names.csv")
 company_names_dict = company_names.groupby('name')['ticker'].apply(list).to_dict()
 
 exact_matches = company_names[company_names.type == 'none']
@@ -15,16 +15,8 @@ exact_matches_dict = exact_matches.groupby('name')['ticker'].apply(list).to_dict
 PUNCS = '!"#$%\'*+,-./:;<=>?@[\\]^_`{|}~–’‘'
 APPOSTROPHES = "´’‘'’"
 
-with open("data/items.json", "r") as file:
- 	items = json.loads(file.read())
-
-items = [
-	{
-		"_source" : {
-			"title" : "Biotech stocks snapped back from their weekly losses and ended higher for the week ended March 12, with the broader market recovery partly aiding the reversal. Entera Bio Ltd. (NASDAQ:ENTX) was the biggest gainer of the week after it  disclosed  Phase 2 biomarker data that showed positive efficacy for EB613, its investigational drug being evaluated in postmenopausal women with osteoporosis. The week also witnessed a slew of  updates  from companies developing COVID-19 treatments and vaccines. AVEO Pharmaceuticals, Inc.  (AVEO) received the regulatory nod for its new drug application for Tivozanib, for difficult-to-treat kidney cancer that has spread from where it was originally formed. This culminates an eight-year-long wait from the initial filing date. IPO news flow returned, with Prometheus Biosciences, Inc. Common Stock (NASDAQ:RXDX), a biopharma focusing on therapies for inflammatory bowel disease, and Longboard Pharmaceuticals, Inc. Common Stock (NASDAQ:LBPH), a neurological diseases company, debuting on Wall Street. The two companies together raised a combined $270 million in gross proceeds from the initial public offerings. Here are the key catalysts for the unfolding week: Conferences The 15th International Conference on Alzheimer's and Parkinson's Diseases and Related Neurological Disorders: March 9-14 \n33rd Annual Virtual ROTH Conference: March 15-17 \nMuscular Dystrophy Association, or MDS, Virtual Clinical & Scientific Conference: March 15-18 \nMorgan Stanley Virtual Innovation in Pharma Week: March 15-19 \nMorgan Stanley Healthcare Corporate Access Days: March 16 \nOppenheimer 31st Annual Healthcare Conference (Virtual): March 16-18 \nThe Society of Gynecologic Oncology, or SGO, 2021 Annual Meeting: March 19-25 \nThe Endocrine Society's ENDO 2021: March 20-23 PDUFA Dates FibroGen Inc (NASDAQ:FGEN) and AstraZeneca plc's (NASDAQ:AZN) roxadustat PDUFA date of March 20 (Saturday) is likely to be extended, as the FDA has decided to hold an advisory committee meeting before deciding on the new drug application. FibroGen, the sponsor of the application, is seeking approval for the drug to treat anemia in chronic kidney disease patients. Clinical Trial Readouts/Presentations MDA Conference Presentations Sarepta Therapeutics, Inc. (NASDAQ:SRPT): Phase 1 data for SRP-9001 in Duchenne muscular dystrophy, and ... Full story available on Benzinga.com"
-		}
-	}
-]
+# with open("data/items.json", "r") as file:
+#  	items = json.loads(file.read())
 
 ###################################################################################################
 

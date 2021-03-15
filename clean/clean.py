@@ -2,6 +2,7 @@ from elasticsearch.helpers.errors import BulkIndexError
 from elasticsearch import Elasticsearch, helpers
 from clean_item import clean_item
 from const import DIR, CONFIG
+from importlib import reload
 from hashlib import sha256
 from pathlib import Path
 import requests
@@ -22,8 +23,7 @@ HEADERS = {"Content-Type" : "application/json"}
 
 NEWS_DIRS = [
 	Path(f"{DIR}/../rss/news_data"),
-	Path(f"{DIR}/../news/news_data/google"),
-	# Path(f"{DIR}/../news/news_data/cnbc"),
+	Path(f"{DIR}/../news/news_data"),
 ]
 
 NEWS_DIR = Path(f"{DIR}/news_data")
@@ -45,15 +45,29 @@ def get_scores(sentences):
 	response = json.loads(response.content)
 	return response.values()
 
+def init():
+
+	files = {NEWS_DIR / ".gitignore"}
+
+	company_names = pd.read_csv(f"{DIR}/data/cleaned_company_names.csv")
+	company_names_dict = company_names.groupby('name')['ticker'].apply(list).to_dict()
+
+	exact_matches = company_names[company_names.type == 'none']
+	exact_matches_dict = exact_matches.groupby('name')['ticker'].apply(list).to_dict()
+
+	return files, company_names_dict, exact_matches_dict
+
 def cleaning_loop():
 
-	files = set([
-		NEWS_DIR / ".gitignore"
-	])
+	files = {NEWS_DIR / ".gitignore"}
 
 	while True:
 
 		new_files = get_files()
+
+		if len(new_files) < len(files):
+			files = {NEWS_DIR / ".gitignore"}
+			reload(sys.modules['find_company_names'])
 
 		try:
 			
@@ -70,7 +84,6 @@ def cleaning_loop():
 				
 		items = []
 		for new_file in set(new_files).difference(files):
-			print(new_file)
 			with open(new_file, "r") as file:
 				try:
 					items.extend(json.loads(file.read()))
@@ -85,7 +98,7 @@ def cleaning_loop():
 				continue
 
 			try:
-				item = clean_item(item)
+				item = clean_item(item, company_names)
 			except Exception as e:
 				print(e)
 				raise Exception()
