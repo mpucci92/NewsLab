@@ -164,7 +164,7 @@ SAFE_SUFF_SINGLES = [
     'upstart',
     'hp',
     'jd',
-    '3m',
+    '3m'
 ]
 
 SAFE_MOD_SINGLES = [
@@ -182,7 +182,7 @@ SAFE_MOD_SINGLES = [
     "pretium",
     "rogers",
     "slack",
-    "arbor",
+    "arbor"
 ]
 
 SAFE_TWO_GRAMS = [
@@ -242,5 +242,29 @@ TARGET_FALSE_POSTS = [
     "lifted",
     "dropped",
     "slashed",
-    "cut",
+    "cut"
 ]
+
+
+ticker_mistaken_list = [
+    'CEO',
+    'ETN',
+    'PEG',
+    'TSN',
+    'TER',
+    'GOVT',
+    'NAV',
+    'TSE',
+    'IPO',
+    'EPS',
+    'CIO',
+    'CIA',
+    'GDP',
+    'IRR',
+    'CPI',
+    'CFO'
+]
+
+SAFE_SUFF_SINGLES.extend(ticker_mistaken_list)
+
+SAFE_MOD_SINGLES.extend(ticker_mistaken_list)
