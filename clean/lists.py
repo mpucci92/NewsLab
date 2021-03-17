@@ -24,6 +24,7 @@ SUFFIXES = [
     'units',
     'b',
     'cl',
+    'cl a',
     'cl.a',
     'cl.b',
     'cl.c',
